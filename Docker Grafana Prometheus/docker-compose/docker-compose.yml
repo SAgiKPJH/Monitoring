@@ -1,0 +1,74 @@
+x-common: &common
+  restart: unless-stopped
+  logging:
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  prometheus:
+    <<: *common
+    image: prom/prometheus
+    ports:
+      - 19090:9090
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.external-url=/prometheus/'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+
+  grafana:
+    <<: *common
+    image: grafana/grafana
+    ports:
+      - 13000:3000
+    environment:
+      - GF_SERVER_ROOT_URL=https://ajusoft.net/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  node-exporter:
+    <<: *common
+    image: prom/node-exporter
+    ports:
+      - 19100:9100
+
+  dcgm-exporter:
+    <<: *common
+    image: nvcr.io/nvidia/k8s/dcgm-exporter:3.3.8-3.6.0-ubuntu22.04
+    container_name: dcgm-exporter
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - 19400:9400
+
+  cadvisor:
+    <<: *common
+    image: gcr.io/cadvisor/cadvisor:v0.44.0
+    container_name: cadvisor
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /volume1/@eaDir/docker:/var/lib/docker:ro
+      - /etc/localtime:/etc/localtime
+    ports:
+      - 19200:8080
+
+networks:
+  promnet:
+    driver: bridge
+
+volumes:
+  prometheus_data:
+  grafana_data:

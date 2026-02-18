@@ -1,2 +1,0 @@
-# Run Exporter
-docker-compose -f docker-compose-exporter.yml up -d
