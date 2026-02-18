@@ -1,0 +1,40 @@
+global:
+  scrape_interval:     3m
+
+scrape_configs:
+  - job_name: 'synology_drive'
+    scrape_interval: 3m
+    static_configs:
+      - targets: ['172.30.1.30:19100']
+  
+  - job_name: 'synology_docker'
+    scrape_interval: 3m
+    static_configs:
+      - targets: ['172.30.1.30:19200']
+  
+
+  - job_name: 'jju_computer'
+    scrape_interval: 3m
+    static_configs:
+      - targets: ['172.30.1.27:19100']
+  
+  - job_name: 'jju_GPU'
+    scrape_interval: 3m
+    static_configs:
+      - targets: ['172.30.1.27:19400']
+
+  - job_name: 'jju_docker'
+    scrape_interval: 3m
+    static_configs:
+      - targets: ['172.30.1.27:19200']
+
+
+  - job_name: 'jju_mint'
+    scrape_interval: 3m
+    static_configs:
+      - targets: ['172.30.1.32:19100']
+  
+  - job_name: 'jju_mint_docker'
+    scrape_interval: 3m
+    static_configs:
+      - targets: ['172.30.1.32:19200']
