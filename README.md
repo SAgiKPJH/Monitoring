@@ -11,13 +11,6 @@
   - Docker Grafana Prometeus 활용한 모니터링
   - Docker Grafana Prometeus 활용한 다중 PC 모니터링
   - Docker Grafana Prometeus 활용한 nvidia GPU 모니터링
-- [모니터링 통합 구현](<모니터링 통합 구현/README.md>)
-  - 데이터 수집
-  - 시각화 및 대시보드
-  - 데이터 저장
-  - 알림 및 이벤트 관리
-  - 분산 트레이싱
-  - 기타 관리 및 보조 도구
 
 ### 제작자
 [@SAgiKPJH](https://github.com/SAgiKPJH)
