@@ -1,0 +1,161 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["iot", "mongodb"],
+  "templating": {
+    "list": [
+      {
+        "name": "deviceId",
+        "label": "Device",
+        "type": "textbox",
+        "query": "node-01",
+        "current": { "text": "node-01", "value": "node-01" },
+        "options": [{ "text": "node-01", "value": "node-01", "selected": true }]
+      }
+    ]
+  },
+  "time": { "from": "now-6h", "to": "now" },
+  "timezone": "browser",
+  "title": "IoT 환경 모니터링",
+  "uid": "iot-monitoring",
+  "version": 1,
+  "panels": [
+    {
+      "id": 1,
+      "title": "온도 (Temperature)",
+      "type": "timeseries",
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "iot-infinity" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": { "unit": "celsius", "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 10, "showPoints": "auto" } },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "iot-infinity" },
+          "type": "json",
+          "source": "url",
+          "format": "timeseries",
+          "parser": "backend",
+          "url": "http://api:8080/api/readings?deviceId=${deviceId}&from=${__from:date:iso}&to=${__to:date:iso}&limit=5000",
+          "url_options": { "method": "GET" },
+          "root_selector": "",
+          "columns": [
+            { "selector": "timestamp", "text": "time", "type": "timestamp" },
+            { "selector": "temperature", "text": "temperature", "type": "number" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "습도 (Humidity)",
+      "type": "timeseries",
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "iot-infinity" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": { "unit": "humidity", "min": 0, "max": 100, "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 10, "showPoints": "auto" } },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "iot-infinity" },
+          "type": "json",
+          "source": "url",
+          "format": "timeseries",
+          "parser": "backend",
+          "url": "http://api:8080/api/readings?deviceId=${deviceId}&from=${__from:date:iso}&to=${__to:date:iso}&limit=5000",
+          "url_options": { "method": "GET" },
+          "root_selector": "",
+          "columns": [
+            { "selector": "timestamp", "text": "time", "type": "timestamp" },
+            { "selector": "humidity", "text": "humidity", "type": "number" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "조도 (Light)",
+      "type": "timeseries",
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "iot-infinity" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 9 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 10, "showPoints": "auto" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "lightPercent" }, "properties": [{ "id": "unit", "value": "percent" }] }
+        ]
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "iot-infinity" },
+          "type": "json",
+          "source": "url",
+          "format": "timeseries",
+          "parser": "backend",
+          "url": "http://api:8080/api/readings?deviceId=${deviceId}&from=${__from:date:iso}&to=${__to:date:iso}&limit=5000",
+          "url_options": { "method": "GET" },
+          "root_selector": "",
+          "columns": [
+            { "selector": "timestamp", "text": "time", "type": "timestamp" },
+            { "selector": "light", "text": "light", "type": "number" },
+            { "selector": "lightPercent", "text": "lightPercent", "type": "number" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "최신 값 (Latest)",
+      "type": "stat",
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "iot-infinity" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 9 },
+      "fieldConfig": {
+        "defaults": { "custom": {}, "mappings": [] },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "temperature" }, "properties": [{ "id": "unit", "value": "celsius" }] },
+          { "matcher": { "id": "byName", "options": "humidity" }, "properties": [{ "id": "unit", "value": "humidity" }] },
+          { "matcher": { "id": "byName", "options": "lightPercent" }, "properties": [{ "id": "unit", "value": "percent" }] }
+        ]
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^(temperature|humidity|light|lightPercent)$/", "values": false },
+        "orientation": "horizontal",
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "iot-infinity" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "backend",
+          "url": "http://api:8080/api/readings/latest?deviceId=${deviceId}",
+          "url_options": { "method": "GET" },
+          "root_selector": "",
+          "columns": [
+            { "selector": "temperature", "text": "temperature", "type": "number" },
+            { "selector": "humidity", "text": "humidity", "type": "number" },
+            { "selector": "light", "text": "light", "type": "number" },
+            { "selector": "lightPercent", "text": "lightPercent", "type": "number" }
+          ]
+        }
+      ]
+    }
+  ]
+}

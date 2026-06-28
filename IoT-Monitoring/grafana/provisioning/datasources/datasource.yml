@@ -1,0 +1,12 @@
+apiVersion: 1
+
+datasources:
+  - name: IoT-API
+    uid: iot-infinity
+    type: yesoreyeram-infinity-datasource
+    access: proxy
+    isDefault: true
+    editable: true
+    jsonData:
+      # Per-query URLs are absolute (http://api:8080/...), resolved on the docker network.
+      tlsSkipVerify: true

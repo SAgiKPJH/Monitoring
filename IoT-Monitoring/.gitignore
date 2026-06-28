@@ -1,0 +1,10 @@
+# env
+.env
+
+# .NET build output
+api/bin/
+api/obj/
+
+# IDE
+.vs/
+*.user

@@ -1,0 +1,103 @@
+name: iot-monitoring
+
+x-common: &common
+  restart: unless-stopped
+  logging:
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  mongo:
+    <<: *common
+    image: mongo:7
+    container_name: iot-mongo
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-rootpass}
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-monitoring}
+      MONGO_APP_USERNAME: ${MONGO_APP_USERNAME:-iot}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:-iotpass}
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - iotnet
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  api:
+    <<: *common
+    build:
+      context: ./api
+    container_name: iot-api
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      MongoDb__ConnectionString: mongodb://${MONGO_APP_USERNAME:-iot}:${MONGO_APP_PASSWORD:-iotpass}@mongo:27017/${MONGO_DB:-monitoring}?authSource=${MONGO_DB:-monitoring}
+      MongoDb__DatabaseName: ${MONGO_DB:-monitoring}
+      MongoDb__CollectionName: readings
+      Api__ApiKey: ${API_KEY:-}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    networks:
+      - iotnet
+
+  grafana:
+    <<: *common
+    # NOTE: keep Grafana recent enough for the Infinity plugin. The latest Infinity
+    # (>= 3.7.2) requires Grafana >= 11.6; pinning an older Grafana with the latest
+    # plugin causes a client-side "Minified React error #130" when panels render.
+    image: grafana/grafana:12.1.0
+    container_name: iot-grafana
+    depends_on:
+      - api
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_INSTALL_PLUGINS: yesoreyeram-infinity-datasource
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - iotnet
+
+  # Optional admin UI for inspecting the MongoDB data — browse http://localhost:8081
+  mongo-express:
+    <<: *common
+    image: mongo-express:1.0.2
+    container_name: iot-mongo-express
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USERNAME:-root}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD:-rootpass}
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_PORT: "27017"
+      ME_CONFIG_BASICAUTH_USERNAME: ${ME_USER:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_PASSWORD:-admin}
+    ports:
+      - "${MONGO_EXPRESS_PORT:-8081}:8081"
+    networks:
+      - iotnet
+
+networks:
+  iotnet:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  grafana_data:
