@@ -5,7 +5,7 @@ Sends an incrementing counter to the Uno R3 once per second.
 
 The RECEIVER stays on Arduino: ../uno_rx_test/uno_rx_test.ino
 Radio settings here are matched to the Uno's RF24 so they interoperate:
-  channel 76, 250kbps, address b"Node1", 8-byte payload, auto-ACK.
+  channel 101, 250kbps, address b"Node1", 8-byte payload, auto-ACK.
 
 Requires: nrf24l01.py uploaded onto the Pico (sits next to this file).
 Board:    original Raspberry Pi Pico (RP2040) running MicroPython.
@@ -31,7 +31,7 @@ PIN_CE, PIN_CSN = 14, 15
 
 # --- radio config (must match the Uno RF24) ---
 ADDRESS = b"Node1"   # 5 bytes, identical to the receiver
-CHANNEL = 76
+CHANNEL = 101        # above the WiFi 2.4GHz band -> less interference
 PAYLOAD = 8          # 2x uint32 == Uno setPayloadSize(sizeof(TestPacket))
 
 spi = SPI(SPI_ID, sck=Pin(PIN_SCK), mosi=Pin(PIN_MOSI), miso=Pin(PIN_MISO),

@@ -47,7 +47,7 @@ void setup() {
   radio.setAutoAck(false);            // one-way link, no ACK (matches the MicroPython Pico)
   radio.setPALevel(RF24_PA_LOW);
   radio.setDataRate(RF24_250KBPS);
-  radio.setChannel(76);
+  radio.setChannel(101);              // above the WiFi band -> less 2.4GHz interference
   radio.setPayloadSize(sizeof(TestPacket));
   radio.openReadingPipe(1, address);
   radio.startListening();             // receiver mode
