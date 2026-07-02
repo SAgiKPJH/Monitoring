@@ -56,9 +56,10 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
   }
+  radio.setAutoAck(false);    // one-way, no ACK (matches the MicroPython Pico)
   radio.setPALevel(RF24_PA_LOW);
   radio.setDataRate(RF24_250KBPS);
-  radio.setChannel(76);
+  radio.setChannel(101);      // above the WiFi band -> less 2.4GHz interference
   radio.setPayloadSize(sizeof(SensorPayload));
   radio.openReadingPipe(1, address);
   radio.startListening();   // receiver mode
@@ -68,6 +69,11 @@ void loop() {
   if (radio.available()) {
     SensorPayload p;
     radio.read(&p, sizeof(p));
+
+    // Skip empty/garbage payloads (all sensor values 0) — do not forward to the ESP.
+    if (p.temperature == 0.0f && p.humidity == 0.0f && p.light == 0 && p.lightPercent == 0) {
+      return;
+    }
 
     // AVR sprintf has no %f -> format floats with dtostrf().
     char tbuf[12], hbuf[12];

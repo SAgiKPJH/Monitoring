@@ -128,7 +128,7 @@ docker compose up -d --build
 
 ### 공통 무선/데이터 규약 (반드시 일치)
 
-- **NRF24L01** : 채널 `76`, `RF24_250KBPS`, `RF24_PA_LOW`, 주소 `"Node1"`, 고정 페이로드 `sizeof(SensorPayload)`
+- **NRF24L01** : 채널 `101`, `250KBPS`, 주소 `"Node1"`, **auto-ACK off**(단방향), 고정 페이로드 `sizeof(SensorPayload)`(16B)
 - **페이로드 구조체** (Pico/Uno 동일, packed 금지 — 자연 정렬 16바이트):
   ```c
   struct SensorPayload {
@@ -142,13 +142,11 @@ docker compose up -d --build
 - **Uno → ESP8266 (UART 9600, 8N1)** : 줄바꿈(`\n`)으로 끝나는 JSON 1줄
 - **ESP8266 → API** : 위 JSON을 그대로 `POST /api/readings`
 
-### 2-1. Raspberry Pi Pico (송신)
-- Arduino IDE 보드: **Raspberry Pi Pico/RP2040** (earlephilhower `arduino-pico` 코어)
-- 라이브러리: `RF24`(TMRh20), `DHT sensor library`(Adafruit) + `Adafruit Unified Sensor`
-- 배선/핀맵은 [pico_sensor_node.ino](firmware/pico/pico_sensor_node/pico_sensor_node.ino) 상단 주석 참조
-  - NRF: CE=GP14, CSN=GP15, SCK=GP6, MOSI=GP7, MISO=GP4, VCC=**3V3** (SPI0 — `radio.begin()` 전에 `SPI.setRX/SCK/TX`로 핀 지정됨)
-  - DHT DATA=**GP2** (GP15는 NRF CSN으로 사용하므로 이동), 조도 CdS 분압 → GP26(ADC0)
-- DHT22 사용 시 `#define DHT_TYPE DHT22` 로 변경
+### 2-1. Raspberry Pi Pico (송신) — MicroPython / Thonny
+- Thonny + MicroPython. 파일: [pico_sensor_node.py](firmware/pico/pico_sensor_node/pico_sensor_node.py) + `nrf24l01.py`(함께 업로드). 실사용은 **`main.py`로 저장**해 전원만 넣어도 자동 실행.
+- 센서: **AM2320**(온습도, I2C0: SDA=GP0, SCL=GP1) + CdS 조도(ADC0: GP26)
+- NRF(SPI0): CE=GP14, CSN=GP15, SCK=GP6, MOSI=GP7, MISO=GP4, VCC=**3V3**
+- 조정: `TEMP_OFFSET`/`HUM_OFFSET`(온·습도 보정), `SEND_PERIOD_MS`(전송 주기, 기본 30초). 동작 표시: 온보드 LED 1초 깜빡임.
 
 ### 2-2. Arduino Uno R3 (수신 → ESP)
 - Arduino IDE 보드: **Arduino Uno** (CH340G)
@@ -171,12 +169,33 @@ docker compose up -d --build
 
 <br>
 
-## 3. 동작 순서
+## 3. 실행 (전체 시스템 동작)
 
-1. `docker compose up -d --build` 로 서버 기동
-2. Pico / Uno / ESP8266 각각 펌웨어 업로드 (위 DIP 스위치 주의)
-3. 전원 인가 → Pico가 5초마다 측정·송신 → Uno 수신 → ESP가 API로 POST
-4. Grafana(http://localhost:3000) → **IoT 환경 모니터링** 대시보드에서 확인
+펌웨어 업로드가 끝났으면 아래 순서로 켜면 데이터가 흐릅니다. 각 보드는 **전원만 넣으면 자동 실행**됩니다.
+
+**① 서버(Docker 호스트) 먼저** — API가 떠 있어야 데이터를 받습니다.
+```bash
+cd IoT-Monitoring
+docker compose up -d --build      # 코드 변경 시 --build 필수 (안 하면 옛 이미지 재사용 → 500)
+docker compose ps                 # 전부 Up, mongo healthy 확인
+```
+
+**② Pico(센서 노드) 전원 인가**
+- MicroPython 스크립트를 **`main.py`로 저장**해 두면 전원만 넣어도 자동 실행.
+- **온보드 LED가 1초마다 깜빡이면 동작 중** → 30초마다 AM2320+CdS 측정 후 NRF 송신.
+
+**③ Uno+ESP8266 콤보보드 → 실행 모드**
+- DIP를 **`ATmega328 ↔ ESP8266`** 모드로 (보드 인쇄 표 참조; **SW7 OFF** — ESP 정상 부팅에 GPIO0=HIGH 필요).
+  - Uno가 NRF 수신 → JSON을 ESP로(UART 9600) → ESP가 WiFi로 API에 POST.
+  - ⚠️ 이 모드에선 **USB 시리얼 모니터 사용 불가**(D0/D1이 ESP에 물림). 디버깅은 업로드 모드로 잠깐 전환.
+- 전원 인가 → WiFi 접속 후 자동 전송 시작.
+
+**④ 확인**
+- **Grafana** `http://<호스트>:3000` → **IoT 환경 모니터링** 대시보드 값이 갱신되면 성공.
+- mongo-express `http://<호스트>:8081` → `monitoring.readings` 문서 증가 확인.
+- API 직접: `GET http://<호스트>:8080/api/readings/latest?deviceId=node-01`
+
+> 문제 시 단계별 격리 검증: NRF 링크 → [test-nrf24l01](test-nrf24l01/), ESP→API → [test-esp8266-api](test-esp8266-api/).
 
 <br>
 
