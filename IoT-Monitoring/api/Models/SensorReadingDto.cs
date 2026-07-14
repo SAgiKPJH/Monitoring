@@ -12,4 +12,6 @@ public record SensorReadingDto(
     double Humidity,
     int Light,
     int LightPercent,
+    double Battery,
+    int BatteryPercent,
     long Sequence);

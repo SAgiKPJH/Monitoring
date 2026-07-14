@@ -29,6 +29,8 @@ public class ReadingsService
             Humidity = dto.Humidity,
             Light = dto.Light,
             LightPercent = dto.LightPercent,
+            Battery = dto.Battery,
+            BatteryPercent = dto.BatteryPercent,
             Sequence = dto.Sequence,
             Timestamp = DateTime.UtcNow
         };

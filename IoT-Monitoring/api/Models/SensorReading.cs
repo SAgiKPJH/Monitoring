@@ -27,6 +27,12 @@ public class SensorReading
     [BsonElement("lightPercent")]
     public int LightPercent { get; set; }
 
+    [BsonElement("battery")]
+    public double Battery { get; set; }
+
+    [BsonElement("batteryPercent")]
+    public int BatteryPercent { get; set; }
+
     [BsonElement("sequence")]
     public long Sequence { get; set; }
 
