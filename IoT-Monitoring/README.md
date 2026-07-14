@@ -116,8 +116,8 @@ docker compose up -d --build
 저장 문서 형식:
 ```json
 { "deviceId": "node-01", "temperature": 24.3, "humidity": 51.2,
-  "light": 640, "lightPercent": 62, "sequence": 1,
-  "timestamp": "2026-06-24T01:23:45.678Z" }
+  "light": 640, "lightPercent": 62, "battery": 3.78, "batteryPercent": 65,
+  "sequence": 1, "timestamp": "2026-06-24T01:23:45.678Z" }
 ```
 
 `API_KEY` 를 `.env`에 설정하면 POST 요청에 `X-Api-Key` 헤더가 필요합니다(미설정 시 인증 없음).
@@ -128,17 +128,21 @@ docker compose up -d --build
 
 ### 공통 무선/데이터 규약 (반드시 일치)
 
-- **NRF24L01** : 채널 `101`, `250KBPS`, 주소 `"Node1"`, **auto-ACK off**(단방향), 고정 페이로드 `sizeof(SensorPayload)`(16B)
-- **페이로드 구조체** (Pico/Uno 동일, packed 금지 — 자연 정렬 16바이트):
+- **NRF24L01** : 채널 `101`, `250KBPS`, 주소 `"Node1"`, **auto-ACK off**(단방향), 고정 페이로드 `sizeof(SensorPayload)`(28B)
+- **페이로드 구조체** (Pico/Uno 동일, packed 금지 — 자연 정렬 28바이트):
   ```c
   struct SensorPayload {
-    float    temperature;   // °C
-    float    humidity;      // %RH
-    uint32_t sequence;      // 패킷 카운터
-    uint16_t light;         // raw ADC 0..1023
-    uint16_t lightPercent;  // 0..100
+    float    temperature;    // °C
+    float    humidity;       // %RH
+    uint32_t sequence;       // 패킷 카운터
+    uint16_t light;          // raw ADC 0..1023
+    uint16_t lightPercent;   // 0..100
+    float    battery;        // 18650 전압(V)
+    uint16_t batteryPercent; // 0..100
+    char     deviceId[6];    // Pico가 지정한 id (그대로 전달, <=5글자)
   };
   ```
+- **deviceId**: **Pico가 `DEVICE_ID`로 직접 지정** → Uno는 **변환 없이 그대로** JSON/DB에 전달. 여러 Pico는 각자 `DEVICE_ID`만 다르게(`node1`~`node5` 등), 무선 주소 `"Node1"`은 공통. (**5글자 이내**)
 - **Uno → ESP8266 (UART 9600, 8N1)** : 줄바꿈(`\n`)으로 끝나는 JSON 1줄
 - **ESP8266 → API** : 위 JSON을 그대로 `POST /api/readings`
 
@@ -146,7 +150,7 @@ docker compose up -d --build
 - Thonny + MicroPython. 파일: [pico_sensor_node.py](firmware/pico/pico_sensor_node/pico_sensor_node.py) + `nrf24l01.py`(함께 업로드). 실사용은 **`main.py`로 저장**해 전원만 넣어도 자동 실행.
 - 센서: **AM2320**(온습도, I2C0: SDA=GP0, SCL=GP1) + CdS 조도(ADC0: GP26)
 - NRF(SPI0): CE=GP14, CSN=GP15, SCK=GP6, MOSI=GP7, MISO=GP4, VCC=**3V3**
-- 조정: `TEMP_OFFSET`/`HUM_OFFSET`(온·습도 보정), `SEND_PERIOD_MS`(전송 주기, 기본 30초). 동작 표시: 온보드 LED 1초 깜빡임.
+- 조정: `TEMP_OFFSET`/`HUM_OFFSET`(온·습도 보정), `SEND_PERIOD_MS`(전송 주기, **기본 5분**). **온보드 LED = 상태표시**: 부팅 3회 / **평소 10초마다 짧게(동작중)** / AM2320 에러 = 빠르게 2 + 길게 1 / NRF init 에러 = 빠르게 3 + 길게 1(반복).
 
 ### 2-2. Arduino Uno R3 (수신 → ESP)
 - Arduino IDE 보드: **Arduino Uno** (CH340G)
@@ -182,7 +186,7 @@ docker compose ps                 # 전부 Up, mongo healthy 확인
 
 **② Pico(센서 노드) 전원 인가**
 - MicroPython 스크립트를 **`main.py`로 저장**해 두면 전원만 넣어도 자동 실행.
-- **온보드 LED가 1초마다 깜빡이면 동작 중** → 30초마다 AM2320+CdS 측정 후 NRF 송신.
+- **부팅 시 LED 3회 깜빡** 후 5분마다 측정·송신. **평소 10초마다 짧게 깜빡=동작중.** LED 상태표시로 배터리 구동(시리얼 없음) 시에도 진단 가능 — AM2320 에러=빠2+길1, NRF 에러=빠3+길1.
 
 **③ Uno+ESP8266 콤보보드 → 실행 모드**
 - DIP를 **`ATmega328 ↔ ESP8266`** 모드로 (보드 인쇄 표 참조; **SW7 OFF** — ESP 정상 부팅에 GPIO0=HIGH 필요).

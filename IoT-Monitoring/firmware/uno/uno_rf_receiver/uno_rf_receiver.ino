@@ -31,8 +31,7 @@
 #define RF_CE_PIN   9
 #define RF_CSN_PIN  10
 
-// Logical device id for this node (change per node if you run several).
-const char* DEVICE_ID = "node-01";
+// deviceId is set by the Pico and forwarded as-is (no formatting here).
 
 // Radio address — MUST match the Pico transmitter.
 const uint8_t address[6] = "Node1";
@@ -46,6 +45,9 @@ struct SensorPayload {
   uint32_t sequence;
   uint16_t light;
   uint16_t lightPercent;
+  float    battery;         // 18650 voltage (V)
+  uint16_t batteryPercent;  // 0..100
+  char     deviceId[6];     // id set by the Pico (forwarded as-is, <=5 chars)
 };
 
 void setup() {
@@ -76,16 +78,18 @@ void loop() {
     }
 
     // AVR sprintf has no %f -> format floats with dtostrf().
-    char tbuf[12], hbuf[12];
+    char tbuf[12], hbuf[12], bbuf[12];
     dtostrf(p.temperature, 0, 2, tbuf);
     dtostrf(p.humidity, 0, 2, hbuf);
+    dtostrf(p.battery, 0, 2, bbuf);
+    p.deviceId[sizeof(p.deviceId) - 1] = '\0';   // ensure null-terminated; id comes from the Pico as-is
 
-    char line[160];
+    char line[200];
     snprintf(line, sizeof(line),
       "{\"deviceId\":\"%s\",\"temperature\":%s,\"humidity\":%s,"
-      "\"light\":%u,\"lightPercent\":%u,\"sequence\":%lu}",
-      DEVICE_ID, tbuf, hbuf,
-      (unsigned)p.light, (unsigned)p.lightPercent, (unsigned long)p.sequence);
+      "\"light\":%u,\"lightPercent\":%u,\"battery\":%s,\"batteryPercent\":%u,\"sequence\":%lu}",
+      p.deviceId, tbuf, hbuf,
+      (unsigned)p.light, (unsigned)p.lightPercent, bbuf, (unsigned)p.batteryPercent, (unsigned long)p.sequence);
 
     Serial.println(line);   // one JSON object per line -> ESP8266
   }
