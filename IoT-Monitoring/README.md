@@ -72,6 +72,7 @@ docker compose up -d --build
 | Grafana | http://localhost:3000 | 기본 admin / admin (익명 Viewer 허용) |
 | MongoDB | localhost:27017 | 계정은 `.env` 참조 |
 | mongo-express | http://localhost:8081 | 데이터 확인용(선택), admin / admin |
+| go2rtc | http://localhost:1984 | 카메라 RTSP→브라우저 스트림(camera1) — `go2rtc/go2rtc.yaml`에 RTSP URL 입력 |
 
 - 대시보드: Grafana 접속 → **Dashboards → IoT 환경 모니터링** (자동 등록됨)
 - 동작 확인(데이터 수동 주입):

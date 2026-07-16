@@ -1,0 +1,36 @@
+# go2rtc — Tuya 클라우드 카메라를 브라우저(WebRTC)로 스트리밍.
+# ─────────────────────────────────────────────────────────────────────────
+# 이 카메라는 Tuya 클라우드 카메라(device_id/계정은 .env)라 로컬 RTSP가
+# 없어서, go2rtc의 네이티브 Tuya 지원(tuya://)을 사용합니다.
+#
+# ⚠️ 반드시 "Tuya Smart" 앱 계정이어야 합니다 — "Smart Life" 계정은 미지원!
+#    카메라가 Smart Life 앱에 있으면, 삭제 후 "Tuya Smart" 앱에 다시 추가하세요.
+
+streams:
+  # 값은 .env에서 옴(TUYA_EMAIL / TUYA_PASSWORD / TUYA_DEVICE_ID) — docker-compose가 컨테이너에 주입.
+  # region은 계정 데이터센터에 맞게: protect-us(미주/한국 대개) · protect-eu(유럽) · protect-in(인도)
+  #
+  # 1번째 = Tuya 원본, 2번째 = iOS(Safari)용 H.264 트랜스코딩.
+  #   → 카메라가 H.265(HEVC)면 iOS Safari WebRTC가 못 디코드(검은화면)라 H.264로 변환 제공.
+  #   → go2rtc가 클라이언트가 지원하는 코덱을 자동 선택(데스크톱=원본, iOS=H.264).
+  camera1:
+    - tuya://protect-us.ismartlife.me?email=${TUYA_EMAIL}&password=${TUYA_PASSWORD}&device_id=${TUYA_DEVICE_ID}&resolution=hd
+    - ffmpeg:camera1#video=h264
+
+# iOS/iPad(Safari)에서 WebRTC 재생 안 될 때 필수: go2rtc가 광고할 ICE 후보를 명시.
+# (데스크톱은 자동 후보로 되지만 iOS는 엄격해서 호스트 IP를 직접 줘야 함)
+webrtc:
+  candidates:
+    - 172.30.1.42:8555   # 도커 호스트 LAN IP — 8555 포트는 docker-compose에 공개됨
+    - stun:8555
+
+# ── 가장 쉬운 방법 (권장): go2rtc 웹 UI 마법사 ──
+#   브라우저에서  http://172.30.1.42:1984  접속 → [Add] > [Tuya]
+#   → region 선택 + Tuya Smart 이메일/비번 입력 → 카메라 자동 발견 → 위 streams에 자동 등록.
+#   (device_id/region을 손으로 안 맞춰도 되어 실패가 적음)
+#
+# ── Grafana 임베드 URL (호스트 IP 172.30.1.42 반영) ──
+#   WebRTC iframe : http://172.30.1.42:1984/stream.html?src=camera1   ← Tuya는 이게 권장(저지연)
+#   MJPEG  <img>  : http://172.30.1.42:1984/api/stream.mjpeg?src=camera1
+#
+# resolution: hd(메인) / sd(서브, 가벼움)

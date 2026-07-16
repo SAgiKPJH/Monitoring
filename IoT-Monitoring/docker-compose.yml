@@ -66,11 +66,13 @@ services:
       GF_INSTALL_PLUGINS: yesoreyeram-infinity-datasource
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_PANELS_DISABLE_SANITIZE_HTML: "true"   # allow the camera <img>/<iframe> in a Text panel
     ports:
       - "${GRAFANA_PORT:-3000}:3000"
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/img:/usr/share/grafana/public/img/custom:ro   # floor plan (house.png) for the Canvas panel
     networks:
       - iotnet
 
@@ -91,6 +93,25 @@ services:
       ME_CONFIG_BASICAUTH_PASSWORD: ${ME_PASSWORD:-admin}
     ports:
       - "${MONGO_EXPRESS_PORT:-8081}:8081"
+    networks:
+      - iotnet
+
+  # Camera: RTSP -> browser stream (WebRTC/MJPEG) so Grafana can embed it.
+  # The camera MUST expose RTSP/ONVIF. Put its RTSP URL in go2rtc/go2rtc.yaml.
+  go2rtc:
+    <<: *common
+    image: alexxit/go2rtc:latest
+    container_name: iot-go2rtc
+    ports:
+      - "${GO2RTC_PORT:-1984}:1984"   # web UI + API (stream.html / stream.mjpeg / snapshot)
+      - "8555:8555/tcp"               # WebRTC
+      - "8555:8555/udp"
+    environment:
+      TUYA_EMAIL: ${TUYA_EMAIL:-}
+      TUYA_PASSWORD: ${TUYA_PASSWORD:-}
+      TUYA_DEVICE_ID: ${TUYA_DEVICE_ID:-}
+    volumes:
+      - ./go2rtc:/config
     networks:
       - iotnet
 
