@@ -60,7 +60,23 @@ public class ReadingsController : ControllerBase
     public async Task<IActionResult> GetLatest([FromQuery] string? deviceId)
     {
         var reading = await _service.GetLatestAsync(deviceId);
-        if (reading is null) return NotFound();
+        if (reading is null)
+        {
+            // No data yet for this device: return 200 with null fields so Grafana Canvas shows
+            // the "No value" placeholder ("-") instead of "Field Not Found".
+            return Ok(new
+            {
+                deviceId = deviceId ?? "",
+                temperature = (double?)null,
+                humidity = (double?)null,
+                light = (int?)null,
+                lightPercent = (int?)null,
+                battery = (double?)null,
+                batteryPercent = (int?)null,
+                sequence = (long?)null,
+                timestamp = (DateTime?)null
+            });
+        }
         return Ok(reading);
     }
 }

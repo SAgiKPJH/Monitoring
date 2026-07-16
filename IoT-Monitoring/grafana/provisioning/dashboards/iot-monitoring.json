@@ -1,161 +1,1679 @@
 {
-  "annotations": { "list": [] },
-  "editable": true,
-  "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
-  "links": [],
-  "liveNow": false,
-  "refresh": "10s",
-  "schemaVersion": 39,
-  "tags": ["iot", "mongodb"],
-  "templating": {
+  "annotations": {
     "list": [
       {
-        "name": "deviceId",
-        "label": "Device",
-        "type": "textbox",
-        "query": "node-01",
-        "current": { "text": "node-01", "value": "node-01" },
-        "options": [{ "text": "node-01", "value": "node-01", "selected": true }]
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
       }
     ]
   },
-  "time": { "from": "now-6h", "to": "now" },
-  "timezone": "browser",
-  "title": "IoT 환경 모니터링",
-  "uid": "iot-monitoring",
-  "version": 1,
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
   "panels": [
     {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "iot-infinity"
+      },
+      "description": "방별 최신값입니다. 아이콘 기준:\n\n**☀️ 밝기 (조도 %)**\n- 🌙 어두움: <20%\n- 🌥️ 보통: 20~60%\n- ☀️ 밝음: ≥60%\n\n**🔋 배터리 (잔량 %)**\n- 🪫 부족(빨강): <20%\n- 🟠 보통(주황): 20~50%\n- 🔋 충분(초록): ≥50%\n\n**🌡️ 온도**: 실측 °C (80°C 이상이면 빨강)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "noValue": "-",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/_t$/"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "celsius"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/_h$/"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "humidity"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/_b$/"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "from": 0,
+                      "result": {
+                        "color": "red",
+                        "index": 0,
+                        "text": "🪫"
+                      },
+                      "to": 19.999
+                    },
+                    "type": "range"
+                  },
+                  {
+                    "options": {
+                      "from": 20,
+                      "result": {
+                        "color": "orange",
+                        "index": 1,
+                        "text": "🟠"
+                      },
+                      "to": 49.999
+                    },
+                    "type": "range"
+                  },
+                  {
+                    "options": {
+                      "from": 50,
+                      "result": {
+                        "color": "green",
+                        "index": 2,
+                        "text": "🔋"
+                      },
+                      "to": 100
+                    },
+                    "type": "range"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/_l$/"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "from": 0,
+                      "result": {
+                        "color": "#64748b",
+                        "index": 0,
+                        "text": "🌙"
+                      },
+                      "to": 19.999
+                    },
+                    "type": "range"
+                  },
+                  {
+                    "options": {
+                      "from": 20,
+                      "result": {
+                        "color": "#94a3b8",
+                        "index": 1,
+                        "text": "🌥️"
+                      },
+                      "to": 59.999
+                    },
+                    "type": "range"
+                  },
+                  {
+                    "options": {
+                      "from": 60,
+                      "result": {
+                        "color": "#fbbf24",
+                        "index": 2,
+                        "text": "☀️"
+                      },
+                      "to": 100
+                    },
+                    "type": "range"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 9,
+        "x": 0,
+        "y": 0
+      },
       "id": 1,
-      "title": "온도 (Temperature)",
-      "type": "timeseries",
-      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "iot-infinity" },
-      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
-      "fieldConfig": {
-        "defaults": { "unit": "celsius", "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 10, "showPoints": "auto" } },
-        "overrides": []
-      },
-      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "iot-infinity" },
-          "type": "json",
-          "source": "url",
-          "format": "timeseries",
-          "parser": "backend",
-          "url": "http://api:8080/api/readings?deviceId=${deviceId}&from=${__from:date:iso}&to=${__to:date:iso}&limit=5000",
-          "url_options": { "method": "GET" },
-          "root_selector": "",
-          "columns": [
-            { "selector": "timestamp", "text": "time", "type": "timestamp" },
-            { "selector": "temperature", "text": "temperature", "type": "number" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": 2,
-      "title": "습도 (Humidity)",
-      "type": "timeseries",
-      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "iot-infinity" },
-      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 },
-      "fieldConfig": {
-        "defaults": { "unit": "humidity", "min": 0, "max": 100, "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 10, "showPoints": "auto" } },
-        "overrides": []
-      },
-      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "iot-infinity" },
-          "type": "json",
-          "source": "url",
-          "format": "timeseries",
-          "parser": "backend",
-          "url": "http://api:8080/api/readings?deviceId=${deviceId}&from=${__from:date:iso}&to=${__to:date:iso}&limit=5000",
-          "url_options": { "method": "GET" },
-          "root_selector": "",
-          "columns": [
-            { "selector": "timestamp", "text": "time", "type": "timestamp" },
-            { "selector": "humidity", "text": "humidity", "type": "number" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": 3,
-      "title": "조도 (Light)",
-      "type": "timeseries",
-      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "iot-infinity" },
-      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 9 },
-      "fieldConfig": {
-        "defaults": { "unit": "short", "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 10, "showPoints": "auto" } },
-        "overrides": [
-          { "matcher": { "id": "byName", "options": "lightPercent" }, "properties": [{ "id": "unit", "value": "percent" }] }
-        ]
-      },
-      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "iot-infinity" },
-          "type": "json",
-          "source": "url",
-          "format": "timeseries",
-          "parser": "backend",
-          "url": "http://api:8080/api/readings?deviceId=${deviceId}&from=${__from:date:iso}&to=${__to:date:iso}&limit=5000",
-          "url_options": { "method": "GET" },
-          "root_selector": "",
-          "columns": [
-            { "selector": "timestamp", "text": "time", "type": "timestamp" },
-            { "selector": "light", "text": "light", "type": "number" },
-            { "selector": "lightPercent", "text": "lightPercent", "type": "number" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": 4,
-      "title": "최신 값 (Latest)",
-      "type": "stat",
-      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "iot-infinity" },
-      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 9 },
-      "fieldConfig": {
-        "defaults": { "custom": {}, "mappings": [] },
-        "overrides": [
-          { "matcher": { "id": "byName", "options": "temperature" }, "properties": [{ "id": "unit", "value": "celsius" }] },
-          { "matcher": { "id": "byName", "options": "humidity" }, "properties": [{ "id": "unit", "value": "humidity" }] },
-          { "matcher": { "id": "byName", "options": "lightPercent" }, "properties": [{ "id": "unit", "value": "percent" }] }
-        ]
-      },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^(temperature|humidity|light|lightPercent)$/", "values": false },
-        "orientation": "horizontal",
-        "colorMode": "value",
-        "graphMode": "none",
-        "textMode": "value_and_name"
+        "infinitePan": false,
+        "inlineEditing": false,
+        "panZoom": false,
+        "panzoom": false,
+        "root": {
+          "background": {
+            "color": {
+              "fixed": "transparent"
+            },
+            "image": {
+              "fixed": "http://172.30.1.42:3000/public/img/custom/house.png?v=2",
+              "mode": "fixed"
+            },
+            "size": "original"
+          },
+          "border": {
+            "color": {
+              "fixed": "dark-green"
+            }
+          },
+          "constraint": {
+            "horizontal": "left",
+            "vertical": "top"
+          },
+          "elements": [
+            {
+              "background": {
+                "color": {
+                  "fixed": "rgba(2,6,23,0.72)"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "rgba(148,163,184,0.45)"
+                },
+                "width": 1
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#f1f5f9"
+                },
+                "size": 18,
+                "text": {
+                  "field": "BRB_t",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "links": [],
+              "name": "BRB temp",
+              "placement": {
+                "height": 34,
+                "left": 283,
+                "rotation": 0,
+                "top": 255,
+                "width": 84
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "size": 18,
+                "text": {
+                  "field": "BRB_l",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "links": [],
+              "name": "BRB light",
+              "placement": {
+                "height": 28,
+                "left": 283,
+                "rotation": 0,
+                "top": 227,
+                "width": 40
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "size": 18,
+                "text": {
+                  "field": "BRB_b",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "connections": [],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "links": [],
+              "name": "BRB batt",
+              "placement": {
+                "height": 28,
+                "left": 319,
+                "rotation": 0,
+                "top": 227,
+                "width": 40
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "rgba(2,6,23,0.72)"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "rgba(148,163,184,0.45)"
+                },
+                "width": 1
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#f1f5f9"
+                },
+                "size": 18,
+                "text": {
+                  "field": "BRO_t",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "links": [],
+              "name": "BRO temp",
+              "placement": {
+                "height": 34,
+                "left": 56,
+                "rotation": 0,
+                "top": 189,
+                "width": 84
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "size": 18,
+                "text": {
+                  "field": "BRO_l",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "connections": [],
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "links": [],
+              "name": "BRO light",
+              "placement": {
+                "height": 28,
+                "left": 44,
+                "rotation": 0,
+                "top": 161,
+                "width": 40
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "size": 18,
+                "text": {
+                  "field": "BRO_b",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "links": [],
+              "name": "BRO batt",
+              "placement": {
+                "height": 28,
+                "left": 100,
+                "rotation": 0,
+                "top": 161,
+                "width": 40
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "rgba(2,6,23,0.72)"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "rgba(148,163,184,0.45)"
+                },
+                "width": 1
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#f1f5f9"
+                },
+                "size": 18,
+                "text": {
+                  "field": "RO_t",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "links": [],
+              "name": "RO temp",
+              "placement": {
+                "height": 34,
+                "left": 16,
+                "rotation": 0,
+                "top": 334,
+                "width": 84
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "size": 18,
+                "text": {
+                  "field": "RO_l",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "links": [],
+              "name": "RO light",
+              "placement": {
+                "height": 28,
+                "left": 16,
+                "rotation": 0,
+                "top": 298,
+                "width": 40
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "size": 18,
+                "text": {
+                  "field": "RO_b",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "links": [],
+              "name": "RO batt",
+              "placement": {
+                "height": 28,
+                "left": 58,
+                "rotation": 0,
+                "top": 298,
+                "width": 40
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "rgba(2,6,23,0.72)"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "rgba(148,163,184,0.45)"
+                },
+                "width": 1
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#f1f5f9"
+                },
+                "size": 18,
+                "text": {
+                  "field": "TO_t",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "links": [],
+              "name": "TO temp",
+              "placement": {
+                "height": 34,
+                "left": 215,
+                "rotation": 0,
+                "top": 101,
+                "width": 84
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "size": 18,
+                "text": {
+                  "field": "TO_l",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "links": [],
+              "name": "TO light",
+              "placement": {
+                "height": 28,
+                "left": 215,
+                "rotation": 0,
+                "top": 73,
+                "width": 40
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "size": 18,
+                "text": {
+                  "field": "TO_b",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "links": [],
+              "name": "TO batt",
+              "placement": {
+                "height": 28,
+                "left": 255,
+                "rotation": 0,
+                "top": 73,
+                "width": 40
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "rgba(2,6,23,0.72)"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "rgba(148,163,184,0.45)"
+                },
+                "width": 1
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#f1f5f9"
+                },
+                "size": 18,
+                "text": {
+                  "field": "MR_t",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "links": [],
+              "name": "MR temp",
+              "placement": {
+                "height": 34,
+                "left": 211,
+                "rotation": 0,
+                "top": 382,
+                "width": 84
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "size": 18,
+                "text": {
+                  "field": "MR_l",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "links": [],
+              "name": "MR light",
+              "placement": {
+                "height": 28,
+                "left": 204,
+                "rotation": 0,
+                "top": 351,
+                "width": 40
+              },
+              "type": "metric-value"
+            },
+            {
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "size": 18,
+                "text": {
+                  "field": "MR_b",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "links": [],
+              "name": "MR batt",
+              "placement": {
+                "height": 28,
+                "left": 244,
+                "rotation": 0,
+                "top": 354,
+                "width": 40
+              },
+              "type": "metric-value"
+            }
+          ],
+          "name": "Element 1784199932577",
+          "placement": {
+            "height": 100,
+            "left": 0,
+            "rotation": 0,
+            "top": 0,
+            "width": 100
+          },
+          "type": "frame"
+        },
+        "showAdvancedTypes": true
       },
+      "pluginVersion": "12.1.0",
       "targets": [
         {
-          "refId": "A",
-          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "iot-infinity" },
-          "type": "json",
-          "source": "url",
+          "columns": [
+            {
+              "selector": "temperature",
+              "text": "BRB_t",
+              "type": "number"
+            },
+            {
+              "selector": "humidity",
+              "text": "BRB_h",
+              "type": "number"
+            },
+            {
+              "selector": "batteryPercent",
+              "text": "BRB_b",
+              "type": "number"
+            },
+            {
+              "selector": "lightPercent",
+              "text": "BRB_l",
+              "type": "number"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "iot-infinity"
+          },
           "format": "table",
           "parser": "backend",
-          "url": "http://api:8080/api/readings/latest?deviceId=${deviceId}",
-          "url_options": { "method": "GET" },
+          "refId": "A",
           "root_selector": "",
+          "source": "url",
+          "type": "json",
+          "url": "http://api:8080/api/readings/latest?deviceId=BRB",
+          "url_options": {
+            "method": "GET"
+          }
+        },
+        {
           "columns": [
-            { "selector": "temperature", "text": "temperature", "type": "number" },
-            { "selector": "humidity", "text": "humidity", "type": "number" },
-            { "selector": "light", "text": "light", "type": "number" },
-            { "selector": "lightPercent", "text": "lightPercent", "type": "number" }
-          ]
+            {
+              "selector": "temperature",
+              "text": "BRO_t",
+              "type": "number"
+            },
+            {
+              "selector": "humidity",
+              "text": "BRO_h",
+              "type": "number"
+            },
+            {
+              "selector": "batteryPercent",
+              "text": "BRO_b",
+              "type": "number"
+            },
+            {
+              "selector": "lightPercent",
+              "text": "BRO_l",
+              "type": "number"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "iot-infinity"
+          },
+          "format": "table",
+          "parser": "backend",
+          "refId": "B",
+          "root_selector": "",
+          "source": "url",
+          "type": "json",
+          "url": "http://api:8080/api/readings/latest?deviceId=BRO",
+          "url_options": {
+            "method": "GET"
+          }
+        },
+        {
+          "columns": [
+            {
+              "selector": "temperature",
+              "text": "TO_t",
+              "type": "number"
+            },
+            {
+              "selector": "humidity",
+              "text": "TO_h",
+              "type": "number"
+            },
+            {
+              "selector": "batteryPercent",
+              "text": "TO_b",
+              "type": "number"
+            },
+            {
+              "selector": "lightPercent",
+              "text": "TO_l",
+              "type": "number"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "iot-infinity"
+          },
+          "format": "table",
+          "parser": "backend",
+          "refId": "C",
+          "root_selector": "",
+          "source": "url",
+          "type": "json",
+          "url": "http://api:8080/api/readings/latest?deviceId=TO",
+          "url_options": {
+            "method": "GET"
+          }
+        },
+        {
+          "columns": [
+            {
+              "selector": "temperature",
+              "text": "RO_t",
+              "type": "number"
+            },
+            {
+              "selector": "humidity",
+              "text": "RO_h",
+              "type": "number"
+            },
+            {
+              "selector": "batteryPercent",
+              "text": "RO_b",
+              "type": "number"
+            },
+            {
+              "selector": "lightPercent",
+              "text": "RO_l",
+              "type": "number"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "iot-infinity"
+          },
+          "format": "table",
+          "parser": "backend",
+          "refId": "D",
+          "root_selector": "",
+          "source": "url",
+          "type": "json",
+          "url": "http://api:8080/api/readings/latest?deviceId=RO",
+          "url_options": {
+            "method": "GET"
+          }
+        },
+        {
+          "columns": [
+            {
+              "selector": "temperature",
+              "text": "MR_t",
+              "type": "number"
+            },
+            {
+              "selector": "humidity",
+              "text": "MR_h",
+              "type": "number"
+            },
+            {
+              "selector": "batteryPercent",
+              "text": "MR_b",
+              "type": "number"
+            },
+            {
+              "selector": "lightPercent",
+              "text": "MR_l",
+              "type": "number"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "iot-infinity"
+          },
+          "format": "table",
+          "parser": "backend",
+          "refId": "E",
+          "root_selector": "",
+          "source": "url",
+          "type": "json",
+          "url": "http://api:8080/api/readings/latest?deviceId=MR",
+          "url_options": {
+            "method": "GET"
+          }
         }
-      ]
+      ],
+      "title": "집 현황 (평면도) — 방별: 온도 · ☀️밝기 · 🔋배터리",
+      "type": "canvas"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 15,
+        "x": 9,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<iframe src=\"http://172.30.1.42:1984/stream.html?src=camera1\" style=\"width:100%;height:100%;border:0;background:#000\" allow=\"autoplay; fullscreen\"></iframe>",
+        "mode": "html"
+      },
+      "pluginVersion": "12.1.0",
+      "title": "카메라 (camera1)",
+      "type": "text"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "id": 3,
+      "panels": [
+        {
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "iot-infinity"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "celsius"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 14
+          },
+          "id": 4,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.1.0",
+          "targets": [
+            {
+              "columns": [
+                {
+                  "selector": "timestamp",
+                  "text": "time",
+                  "type": "timestamp"
+                },
+                {
+                  "selector": "temperature",
+                  "text": "temperature",
+                  "type": "number"
+                }
+              ],
+              "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "iot-infinity"
+              },
+              "format": "timeseries",
+              "parser": "backend",
+              "refId": "A",
+              "root_selector": "",
+              "source": "url",
+              "type": "json",
+              "url": "http://api:8080/api/readings?deviceId=${room}&from=${__from:date:iso}&to=${__to:date:iso}&limit=5000",
+              "url_options": {
+                "method": "GET"
+              }
+            }
+          ],
+          "title": "온도 ($room)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "iot-infinity"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "max": 100,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "humidity"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 14
+          },
+          "id": 5,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.1.0",
+          "targets": [
+            {
+              "columns": [
+                {
+                  "selector": "timestamp",
+                  "text": "time",
+                  "type": "timestamp"
+                },
+                {
+                  "selector": "humidity",
+                  "text": "humidity",
+                  "type": "number"
+                }
+              ],
+              "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "iot-infinity"
+              },
+              "format": "timeseries",
+              "parser": "backend",
+              "refId": "A",
+              "root_selector": "",
+              "source": "url",
+              "type": "json",
+              "url": "http://api:8080/api/readings?deviceId=${room}&from=${__from:date:iso}&to=${__to:date:iso}&limit=5000",
+              "url_options": {
+                "method": "GET"
+              }
+            }
+          ],
+          "title": "습도 ($room)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "iot-infinity"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": 0
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "lightPercent"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "percent"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 22
+          },
+          "id": 6,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.1.0",
+          "targets": [
+            {
+              "columns": [
+                {
+                  "selector": "timestamp",
+                  "text": "time",
+                  "type": "timestamp"
+                },
+                {
+                  "selector": "light",
+                  "text": "light",
+                  "type": "number"
+                },
+                {
+                  "selector": "lightPercent",
+                  "text": "lightPercent",
+                  "type": "number"
+                }
+              ],
+              "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "iot-infinity"
+              },
+              "format": "timeseries",
+              "parser": "backend",
+              "refId": "A",
+              "root_selector": "",
+              "source": "url",
+              "type": "json",
+              "url": "http://api:8080/api/readings?deviceId=${room}&from=${__from:date:iso}&to=${__to:date:iso}&limit=5000",
+              "url_options": {
+                "method": "GET"
+              }
+            }
+          ],
+          "title": "조도 ($room)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "iot-infinity"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 2,
+              "mappings": [],
+              "max": 5,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": 0
+                  },
+                  {
+                    "color": "orange",
+                    "value": 3.3
+                  },
+                  {
+                    "color": "green",
+                    "value": 3.6
+                  }
+                ]
+              },
+              "unit": "volt"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 22
+          },
+          "id": 7,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.1.0",
+          "targets": [
+            {
+              "columns": [
+                {
+                  "selector": "timestamp",
+                  "text": "time",
+                  "type": "timestamp"
+                },
+                {
+                  "selector": "battery",
+                  "text": "battery",
+                  "type": "number"
+                }
+              ],
+              "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "iot-infinity"
+              },
+              "format": "timeseries",
+              "parser": "backend",
+              "refId": "A",
+              "root_selector": "",
+              "source": "url",
+              "type": "json",
+              "url": "http://api:8080/api/readings?deviceId=${room}&from=${__from:date:iso}&to=${__to:date:iso}&limit=5000",
+              "url_options": {
+                "method": "GET"
+              }
+            }
+          ],
+          "title": "배터리 전압 ($room)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "iot-infinity"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 0,
+              "mappings": [],
+              "max": 100,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": 0
+                  },
+                  {
+                    "color": "orange",
+                    "value": 20
+                  },
+                  {
+                    "color": "green",
+                    "value": 50
+                  }
+                ]
+              },
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 30
+          },
+          "id": 8,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.1.0",
+          "targets": [
+            {
+              "columns": [
+                {
+                  "selector": "timestamp",
+                  "text": "time",
+                  "type": "timestamp"
+                },
+                {
+                  "selector": "batteryPercent",
+                  "text": "batteryPercent",
+                  "type": "number"
+                }
+              ],
+              "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "iot-infinity"
+              },
+              "format": "timeseries",
+              "parser": "backend",
+              "refId": "A",
+              "root_selector": "",
+              "source": "url",
+              "type": "json",
+              "url": "http://api:8080/api/readings?deviceId=${room}&from=${__from:date:iso}&to=${__to:date:iso}&limit=5000",
+              "url_options": {
+                "method": "GET"
+              }
+            }
+          ],
+          "title": "배터리 잔량 % ($room)",
+          "type": "timeseries"
+        }
+      ],
+      "title": "📊 상세 데이터 (방: $room)",
+      "type": "row"
     }
-  ]
+  ],
+  "preload": false,
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": [
+    "iot",
+    "home"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "BRB",
+          "value": "BRB"
+        },
+        "label": "방 (상세)",
+        "name": "room",
+        "options": [
+          {
+            "selected": true,
+            "text": "BRB",
+            "value": "BRB"
+          },
+          {
+            "selected": false,
+            "text": "BRO",
+            "value": "BRO"
+          },
+          {
+            "selected": false,
+            "text": "TO",
+            "value": "TO"
+          },
+          {
+            "selected": false,
+            "text": "RO",
+            "value": "RO"
+          },
+          {
+            "selected": false,
+            "text": "MR",
+            "value": "MR"
+          }
+        ],
+        "query": "BRB,BRO,TO,RO,MR",
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-12h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "IoT 집 모니터링",
+  "uid": "iot-monitoring",
+  "version": 28
 }
