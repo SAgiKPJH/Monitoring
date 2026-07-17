@@ -575,9 +575,9 @@
               "name": "TO temp",
               "placement": {
                 "height": 34,
-                "left": 215,
+                "left": 193,
                 "rotation": 0,
-                "top": 101,
+                "top": 354,
                 "width": 84
               },
               "type": "metric-value"
@@ -610,9 +610,9 @@
               "name": "TO light",
               "placement": {
                 "height": 28,
-                "left": 215,
+                "left": 195,
                 "rotation": 0,
-                "top": 73,
+                "top": 326,
                 "width": 40
               },
               "type": "metric-value"
@@ -645,9 +645,9 @@
               "name": "TO batt",
               "placement": {
                 "height": 28,
-                "left": 255,
+                "left": 231,
                 "rotation": 0,
-                "top": 73,
+                "top": 326,
                 "width": 40
               },
               "type": "metric-value"
@@ -684,9 +684,9 @@
               "name": "MR temp",
               "placement": {
                 "height": 34,
-                "left": 211,
+                "left": 215,
                 "rotation": 0,
-                "top": 382,
+                "top": 110,
                 "width": 84
               },
               "type": "metric-value"
@@ -719,9 +719,9 @@
               "name": "MR light",
               "placement": {
                 "height": 28,
-                "left": 204,
+                "left": 223,
                 "rotation": 0,
-                "top": 351,
+                "top": 82,
                 "width": 40
               },
               "type": "metric-value"
@@ -754,9 +754,9 @@
               "name": "MR batt",
               "placement": {
                 "height": 28,
-                "left": 244,
+                "left": 255,
                 "rotation": 0,
-                "top": 354,
+                "top": 82,
                 "width": 40
               },
               "type": "metric-value"
@@ -1675,5 +1675,5 @@
   "timezone": "browser",
   "title": "IoT 집 모니터링",
   "uid": "iot-monitoring",
-  "version": 28
+  "version": 31
 }
