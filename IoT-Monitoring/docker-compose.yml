@@ -115,6 +115,26 @@ services:
     networks:
       - iotnet
 
+  # go2rtc's Tuya cloud WebRTC stream degrades after ~3 days of uptime.
+  # This sidecar bounces ONLY the go2rtc container every 2 days to keep it healthy.
+  # (Needs the Docker socket to issue the restart — home-lab trade-off.)
+  go2rtc-restarter:
+    <<: *common
+    image: docker:cli
+    container_name: iot-go2rtc-restarter
+    depends_on:
+      - go2rtc
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          sleep ${GO2RTC_RESTART_SECONDS:-172800}   # default 2 days
+          echo "[restarter] restarting go2rtc..."
+          docker restart iot-go2rtc || echo "[restarter] restart failed"
+        done
+
 networks:
   iotnet:
     driver: bridge

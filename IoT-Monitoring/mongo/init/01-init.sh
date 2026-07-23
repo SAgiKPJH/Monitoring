@@ -20,5 +20,7 @@ target.createUser({
 });
 target.createCollection("readings");
 target.readings.createIndex({ deviceId: 1, timestamp: -1 });
+target.createCollection("errors");
+target.errors.createIndex({ deviceId: 1, timestamp: -1 });
 print("[init] done");
 EOF

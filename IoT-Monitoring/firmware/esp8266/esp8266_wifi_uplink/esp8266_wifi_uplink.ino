@@ -29,6 +29,7 @@ const char* WIFI_PASS = "YOUR_WIFI_PASSWORD";   // <- 실제 WiFi 비밀번호�
 
 // Point this at the machine running docker-compose (the API host:port).
 const char* API_URL   = "http://172.30.1.42:8080/api/readings";
+const char* ERROR_URL = "http://172.30.1.42:8080/api/errors";   // node fault reports
 
 // Set only if the API has API_KEY configured; otherwise leave empty.
 const char* API_KEY   = "";
@@ -47,13 +48,13 @@ void connectWifi() {
   }
 }
 
-void postReading(const String& json) {
+void postJson(const String& json, const char* url) {
   connectWifi();
   if (WiFi.status() != WL_CONNECTED) return;
 
   WiFiClient client;
   HTTPClient http;
-  if (http.begin(client, API_URL)) {
+  if (http.begin(client, url)) {
     http.addHeader("Content-Type", "application/json");
     if (strlen(API_KEY) > 0) {
       http.addHeader("X-Api-Key", API_KEY);
@@ -76,7 +77,12 @@ void loop() {
     if (c == '\n') {
       lineBuffer.trim();
       if (lineBuffer.startsWith("{")) {
-        postReading(lineBuffer);
+        // Error reports carry "type":"error" -> a different endpoint.
+        if (lineBuffer.indexOf("\"type\":\"error\"") >= 0) {
+          postJson(lineBuffer, ERROR_URL);
+        } else {
+          postJson(lineBuffer, API_URL);
+        }
       }
       lineBuffer = "";
     } else if (c != '\r') {

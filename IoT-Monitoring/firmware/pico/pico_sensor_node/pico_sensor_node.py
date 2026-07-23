@@ -4,7 +4,8 @@ Sensor node - Raspberry Pi Pico (MicroPython) - production firmware
 Reads AM2320 (temp/humidity, I2C) + CdS light (ADC) + 18650 battery voltage (VSYS)
 and sends a 32-byte struct over NRF24L01 to the Uno receiver. One-way, auto-ACK off.
 On-board LED = status: boot 3 blinks; alive = short blink every 10s; AM2320 err = 2 fast + 1 long;
-NRF init err = 3 fast + 1 long (repeats). Sends every 5 minutes.
+NRF init err = 3 fast + 1 long. On a fatal error the node blinks, reports the cause over NRF
+(when the radio is up), then resets to restart from the top. Sends every 5 minutes.
 
 Requires nrf24l01.py on the Pico (sits next to this file).
 Board: original Raspberry Pi Pico (RP2040) running MicroPython.
@@ -17,9 +18,10 @@ Wiring:
 
 Payload must stay identical to uno_rf_receiver.ino:
   struct { float temperature; float humidity; uint32 sequence; uint16 light;
-           uint16 lightPercent; float battery; uint16 batteryPercent; char deviceId[6]; }
+           uint16 lightPercent; float battery; uint16 batteryPercent; char deviceId[6];
+           uint8 msgType; uint8 errorCode; }
 """
-from machine import Pin, SPI, I2C, ADC
+from machine import Pin, SPI, I2C, ADC, reset
 from nrf24l01 import NRF24L01
 import struct
 import time
@@ -28,11 +30,17 @@ import time
 CHANNEL = 101             # must match the Uno (above the WiFi band)
 ADDRESS = b"Node1"        # must match the Uno
 DEVICE_ID = "BRB"       # THIS node's id (<=5 chars), forwarded to the DB as-is (change per Pico)
-PAYLOAD = 28              # "<ffIHHfH6s"
+PAYLOAD = 30              # "<ffIHHfH6sBB"  (adds msgType + errorCode)
 SEND_PERIOD_MS = 300000   # read + transmit interval (5 min)
-ERROR_RETRY_MS = 5000     # retry interval after an AM2320 error (LED keeps signalling)
+TX_REPEAT = 3             # send each packet N times (receiver de-dups); survives a missed packet
 HEARTBEAT_MS = 10000      # short "alive" blink every 10s while waiting between sends
 AM2320_ADDR = 0x5C
+
+# message type + error codes — keep in sync with uno_rf_receiver.ino and the API (ErrorsService).
+MSG_READING = 0
+MSG_ERROR   = 1
+ERR_AM2320  = 1           # AM2320 temp/humidity read failed
+ERR_NRF     = 2           # NRF24L01 radio init failed (blink+reset only — can't transmit)
 
 # per-device calibration (tune against a reference; e.g. -2.0 if it reads 2C high)
 TEMP_OFFSET = 0.0
@@ -96,9 +104,10 @@ try:
     nrf.stop_listening()
 except OSError as e:
     print("NRF init FAIL:", e)
-    while True:                    # fatal -> keep signalling on the LED
+    for _ in range(5):            # fatal + radio dead -> can't report; blink then restart
         status_nrf_err()
-        time.sleep_ms(1000)
+    time.sleep_ms(2000)
+    reset()                       # restart from the top and re-attempt radio init
 
 
 def read_am2320():
@@ -141,27 +150,59 @@ def read_battery():
     return v, pct
 
 
+def read_am2320_retry(n=3):
+    # A single I2C glitch shouldn't reboot the node; retry a few times before giving up.
+    last = None
+    for _ in range(n):
+        try:
+            return read_am2320()
+        except OSError as e:
+            last = e
+            time.sleep_ms(200)
+    raise last if last else OSError("AM2320 read failed")
+
+
+def send_error(code):
+    # Best-effort: report the failure cause over NRF (msgType=1). Requires the radio to be up.
+    buf = struct.pack("<ffIHHfH6sBB",
+                      0.0, 0.0, seq & 0xFFFFFFFF, 0, 0, 0.0, 0,
+                      DEVICE_ID.encode(), MSG_ERROR, code)
+    for _ in range(TX_REPEAT):     # send N times for reliability (receiver de-dups)
+        try:
+            nrf.send(buf)
+        except OSError:
+            pass
+        time.sleep_ms(5)
+    print("{} error report sent: code={}".format(DEVICE_ID, code))
+
+
 print("=== Pico sensor node (MicroPython) ===")
 seq = 0
 while True:
     seq += 1
     try:
-        t, h = read_am2320()
+        t, h = read_am2320_retry()
         t += TEMP_OFFSET
         h += HUM_OFFSET
     except OSError as e:
         print("AM2320 read fail:", e)
-        status_am2320_err()
-        time.sleep_ms(ERROR_RETRY_MS)
-        continue
+        for _ in range(3):             # blink the AM2320 pattern so it's visible
+            status_am2320_err()
+        send_error(ERR_AM2320)         # report the cause over NRF ...
+        time.sleep_ms(2000)
+        reset()                        # ... then restart from the top
     light, lightpct = read_light()
     vbat, batpct = read_battery()
-    buf = struct.pack("<ffIHHfH6s", t, h, seq & 0xFFFFFFFF, light, lightpct, vbat, batpct, DEVICE_ID.encode())
-    try:
-        nrf.send(buf)
-        s = "sent"
-    except OSError:
-        s = "TX FAIL"
+    buf = struct.pack("<ffIHHfH6sBB", t, h, seq & 0xFFFFFFFF, light, lightpct, vbat, batpct,
+                      DEVICE_ID.encode(), MSG_READING, 0)
+    s = "TX FAIL"
+    for _ in range(TX_REPEAT):     # send N times — receiver keeps only the first
+        try:
+            nrf.send(buf)
+            s = "sent"
+        except OSError:
+            pass
+        time.sleep_ms(5)
     print("{} #{}  T={:.1f}C H={:.1f}%  light={}({}%)  bat={:.2f}V({}%)  -> {}".format(
         DEVICE_ID, seq, t, h, light, lightpct, vbat, batpct, s))
 

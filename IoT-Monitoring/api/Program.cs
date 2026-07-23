@@ -10,6 +10,7 @@ var mongoSettings = builder.Configuration.GetSection("MongoDb").Get<MongoDbSetti
                     ?? new MongoDbSettings();
 builder.Services.AddSingleton(mongoSettings);
 builder.Services.AddSingleton<ReadingsService>();
+builder.Services.AddSingleton<ErrorsService>();
 
 // Allow Grafana (and any browser client) to query the API.
 builder.Services.AddCors(options =>
@@ -31,6 +32,9 @@ app.MapGet("/", () => Results.Ok(new
         "POST /api/readings",
         "GET  /api/readings?deviceId=&from=&to=&limit=",
         "GET  /api/readings/latest?deviceId=",
+        "POST /api/errors",
+        "GET  /api/errors?deviceId=&from=&to=&limit=",
+        "GET  /api/errors/latest?deviceId=",
         "GET  /health"
     }
 }));

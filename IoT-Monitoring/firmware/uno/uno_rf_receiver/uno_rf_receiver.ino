@@ -48,6 +48,8 @@ struct SensorPayload {
   float    battery;         // 18650 voltage (V)
   uint16_t batteryPercent;  // 0..100
   char     deviceId[6];     // id set by the Pico (forwarded as-is, <=5 chars)
+  uint8_t  msgType;         // 0 = sensor reading, 1 = error report
+  uint8_t  errorCode;       // when msgType==1: cause code (1=AM2320, 2=NRF)
 };
 
 void setup() {
@@ -71,6 +73,17 @@ void loop() {
   if (radio.available()) {
     SensorPayload p;
     radio.read(&p, sizeof(p));
+    p.deviceId[sizeof(p.deviceId) - 1] = '\0';   // ensure null-terminated; id comes from the Pico as-is
+
+    // Error report from the Pico -> forward to the API's /api/errors (tagged type=error).
+    if (p.msgType == 1) {
+      char eline[120];
+      snprintf(eline, sizeof(eline),
+        "{\"type\":\"error\",\"deviceId\":\"%s\",\"errorCode\":%u,\"sequence\":%lu}",
+        p.deviceId, (unsigned)p.errorCode, (unsigned long)p.sequence);
+      Serial.println(eline);
+      return;
+    }
 
     // Skip empty/garbage payloads (all sensor values 0) — do not forward to the ESP.
     if (p.temperature == 0.0f && p.humidity == 0.0f && p.light == 0 && p.lightPercent == 0) {
@@ -82,7 +95,6 @@ void loop() {
     dtostrf(p.temperature, 0, 2, tbuf);
     dtostrf(p.humidity, 0, 2, hbuf);
     dtostrf(p.battery, 0, 2, bbuf);
-    p.deviceId[sizeof(p.deviceId) - 1] = '\0';   // ensure null-terminated; id comes from the Pico as-is
 
     char line[200];
     snprintf(line, sizeof(line),
