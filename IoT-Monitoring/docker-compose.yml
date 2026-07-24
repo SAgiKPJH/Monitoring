@@ -67,6 +67,8 @@ services:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
       GF_PANELS_DISABLE_SANITIZE_HTML: "true"   # allow the camera <img>/<iframe> in a Text panel
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}   # Slack incoming webhook (alerting provisioning에서 사용)
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/iot-monitoring.json
     ports:
       - "${GRAFANA_PORT:-3000}:3000"
     volumes:

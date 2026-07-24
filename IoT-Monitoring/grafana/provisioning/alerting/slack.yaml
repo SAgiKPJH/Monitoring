@@ -1,0 +1,25 @@
+# Grafana alerting: Slack(incoming webhook) contact point + routing.
+# text 템플릿을 커스텀 → 기본 "Value" 블록 없이 각 알림의 summary(현재값 포함)만 표시.
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: slack
+    receivers:
+      - uid: slack_webhook
+        type: slack
+        settings:
+          url: ${SLACK_WEBHOOK_URL}
+          title: '{{ if eq .Status "firing" }}🔴 발생{{ else }}🟢 해제{{ end }} · IoT 알림'
+          text: |-
+            {{ range .Alerts }}{{ .Annotations.summary }}
+            {{ end }}
+        disableResolveMessage: false   # 발생·해제 둘 다 전송
+
+policies:
+  - orgId: 1
+    receiver: slack
+    group_by: ["alertname", "deviceId"]
+    group_wait: 0s
+    group_interval: 1m
+    repeat_interval: 4h

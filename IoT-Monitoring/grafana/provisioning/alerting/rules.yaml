@@ -1,0 +1,310 @@
+# Grafana 알림 규칙 (BRB). 온도는 높음/낮음 방향별로 분리하고, 메시지엔 현재값만 표시.
+# summary 의 {{ $values.B.Value }} 는 규칙 평가 시 현재 측정값으로 치환됨(B=reduce last).
+# 동작 확인되면 방(BRO/TO/RO/MR)마다 deviceId만 바꿔 복제.
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: iot-BRB
+    folder: IoT Alerts
+    interval: 1m
+    rules:
+      # ===== 온도: 높음 =====
+      - uid: brb_temp_hi_danger
+        title: 온도 높음 위험 (BRB)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 위험, deviceId: BRB }
+        annotations: { summary: '🌡️ 온도 높음(위험) BRB — 현재 {{ printf "%.1f" $values.B.Value }}℃ (27℃ 초과)' }
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/latest?deviceId=BRB
+              url_options: { method: GET }
+              root_selector: ""
+              columns:
+                - { selector: temperature, text: temperature, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: gt, params: [27] }
+
+      - uid: brb_temp_hi_warn
+        title: 온도 높음 경고 (BRB)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 경고, deviceId: BRB }
+        annotations: { summary: '🌡️ 온도 높음(경고) BRB — 현재 {{ printf "%.1f" $values.B.Value }}℃ (28℃ 초과)' }
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/latest?deviceId=BRB
+              url_options: { method: GET }
+              root_selector: ""
+              columns:
+                - { selector: temperature, text: temperature, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: gt, params: [28] }
+
+      # ===== 온도: 낮음 =====
+      - uid: brb_temp_lo_danger
+        title: 온도 낮음 위험 (BRB)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 위험, deviceId: BRB }
+        annotations: { summary: '🌡️ 온도 낮음(위험) BRB — 현재 {{ printf "%.1f" $values.B.Value }}℃ (22℃ 미만)' }
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/latest?deviceId=BRB
+              url_options: { method: GET }
+              root_selector: ""
+              columns:
+                - { selector: temperature, text: temperature, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: lt, params: [22] }
+
+      - uid: brb_temp_lo_warn
+        title: 온도 낮음 경고 (BRB)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 경고, deviceId: BRB }
+        annotations: { summary: '🌡️ 온도 낮음(경고) BRB — 현재 {{ printf "%.1f" $values.B.Value }}℃ (20℃ 미만)' }
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/latest?deviceId=BRB
+              url_options: { method: GET }
+              root_selector: ""
+              columns:
+                - { selector: temperature, text: temperature, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: lt, params: [20] }
+
+      # ===== 습도 (범위 벗어남) =====
+      - uid: brb_humi_danger
+        title: 습도 위험 (BRB)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 위험, deviceId: BRB }
+        annotations: { summary: '💧 습도 위험 BRB — 현재 {{ printf "%.0f" $values.B.Value }}% (40~60% 벗어남)' }
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/latest?deviceId=BRB
+              url_options: { method: GET }
+              root_selector: ""
+              columns:
+                - { selector: humidity, text: humidity, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: outside_range, params: [40, 60] }
+
+      - uid: brb_humi_warn
+        title: 습도 경고 (BRB)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 경고, deviceId: BRB }
+        annotations: { summary: '💧 습도 경고 BRB — 현재 {{ printf "%.0f" $values.B.Value }}% (20~80% 벗어남)' }
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/latest?deviceId=BRB
+              url_options: { method: GET }
+              root_selector: ""
+              columns:
+                - { selector: humidity, text: humidity, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: outside_range, params: [20, 80] }
+
+      # ===== 배터리 =====
+      - uid: brb_batt_warn
+        title: 배터리 경고 (BRB)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 경고, deviceId: BRB }
+        annotations: { summary: '🔋 배터리 경고 BRB — 현재 {{ printf "%.0f" $values.B.Value }}% (20% 이하)' }
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/latest?deviceId=BRB
+              url_options: { method: GET }
+              root_selector: ""
+              columns:
+                - { selector: batteryPercent, text: batteryPercent, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: lt, params: [20] }
+
+      - uid: brb_batt_replace
+        title: 배터리 교체 (BRB)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 교체, deviceId: BRB }
+        annotations: { summary: '🪫 배터리 교체 필요 BRB — 현재 {{ printf "%.0f" $values.B.Value }}% (10% 이하)' }
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/latest?deviceId=BRB
+              url_options: { method: GET }
+              root_selector: ""
+              columns:
+                - { selector: batteryPercent, text: batteryPercent, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: lt, params: [10] }
