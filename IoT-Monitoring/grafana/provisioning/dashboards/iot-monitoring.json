@@ -26,7 +26,7 @@
         "type": "yesoreyeram-infinity-datasource",
         "uid": "iot-infinity"
       },
-      "description": "방별 최신값입니다. 아이콘 기준:\n\n**☀️ 밝기 (조도 %)**\n- 🌙 어두움: <20%\n- 🌥️ 보통: 20~60%\n- ☀️ 밝음: ≥60%\n\n**🔋 배터리 (잔량 %)**\n- 🪫 부족(빨강): <20%\n- 🟠 보통(주황): 20~50%\n- 🔋 충분(초록): ≥50%\n\n**🌡️ 온도**: 실측 °C (80°C 이상이면 빨강)",
+      "description": "방별 최신값입니다. 아이콘 기준:\n\n**☀️ 밝기 (조도 %)**\n- 🌙 어두움: <20%\n- 🌥️ 보통: 20~60%\n- ☀️ 밝음: ≥60%\n\n**🔋 배터리 (잔량 %)**\n- 🪫 부족(빨강): <20%\n- 🟠 보통(주황): 20~50%\n- 🔋 충분(초록): ≥50%\n\n**🌡️ 온도**: 파랑<18 · 초록 18~26 · 주황 26~28 · 빨강 ≥28℃\n\n**🏠 방 위치**\n- BRB = 아기 침대 옆\n- MR = 현관 주변\n- BRO = 큰방 바깥\n- TO = 화장실 바깥\n- RO = 거실",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -62,6 +62,30 @@
               {
                 "id": "decimals",
                 "value": 1
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "blue",
+                      "value": null
+                    },
+                    {
+                      "color": "green",
+                      "value": 18
+                    },
+                    {
+                      "color": "orange",
+                      "value": 26
+                    },
+                    {
+                      "color": "red",
+                      "value": 28
+                    }
+                  ]
+                }
               }
             ]
           },
@@ -229,7 +253,7 @@
               "config": {
                 "align": "center",
                 "color": {
-                  "fixed": "#f1f5f9"
+                  "field": "BRB_t"
                 },
                 "size": 18,
                 "text": {
@@ -339,7 +363,7 @@
               "config": {
                 "align": "center",
                 "color": {
-                  "fixed": "#f1f5f9"
+                  "field": "BRO_t"
                 },
                 "size": 18,
                 "text": {
@@ -449,7 +473,7 @@
               "config": {
                 "align": "center",
                 "color": {
-                  "fixed": "#f1f5f9"
+                  "field": "RO_t"
                 },
                 "size": 18,
                 "text": {
@@ -558,7 +582,7 @@
               "config": {
                 "align": "center",
                 "color": {
-                  "fixed": "#f1f5f9"
+                  "field": "TO_t"
                 },
                 "size": 18,
                 "text": {
@@ -667,7 +691,7 @@
               "config": {
                 "align": "center",
                 "color": {
-                  "fixed": "#f1f5f9"
+                  "field": "MR_t"
                 },
                 "size": 18,
                 "text": {
@@ -1013,7 +1037,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "palette-classic"
+                "mode": "thresholds"
               },
               "custom": {
                 "axisBorderShow": false,
@@ -1025,7 +1049,7 @@
                 "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 10,
-                "gradientMode": "none",
+                "gradientMode": "scheme",
                 "hideFrom": {
                   "legend": false,
                   "tooltip": false,
@@ -1053,12 +1077,20 @@
                 "mode": "absolute",
                 "steps": [
                   {
+                    "color": "blue",
+                    "value": null
+                  },
+                  {
                     "color": "green",
-                    "value": 0
+                    "value": 18
+                  },
+                  {
+                    "color": "orange",
+                    "value": 26
                   },
                   {
                     "color": "red",
-                    "value": 80
+                    "value": 28
                   }
                 ]
               },
@@ -1117,7 +1149,7 @@
               }
             }
           ],
-          "title": "온도 ($room)",
+          "title": "온도 (${room:text})",
           "type": "timeseries"
         },
         {
@@ -1128,7 +1160,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "palette-classic"
+                "mode": "thresholds"
               },
               "custom": {
                 "axisBorderShow": false,
@@ -1140,7 +1172,7 @@
                 "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 10,
-                "gradientMode": "none",
+                "gradientMode": "scheme",
                 "hideFrom": {
                   "legend": false,
                   "tooltip": false,
@@ -1170,12 +1202,16 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": 0
+                    "color": "orange",
+                    "value": null
                   },
                   {
-                    "color": "red",
-                    "value": 80
+                    "color": "green",
+                    "value": 30
+                  },
+                  {
+                    "color": "blue",
+                    "value": 60
                   }
                 ]
               },
@@ -1234,7 +1270,7 @@
               }
             }
           ],
-          "title": "습도 ($room)",
+          "title": "습도 (${room:text})",
           "type": "timeseries"
         },
         {
@@ -1367,7 +1403,7 @@
               }
             }
           ],
-          "title": "조도 ($room)",
+          "title": "조도 (${room:text})",
           "type": "timeseries"
         },
         {
@@ -1378,7 +1414,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "palette-classic"
+                "mode": "thresholds"
               },
               "custom": {
                 "axisBorderShow": false,
@@ -1390,7 +1426,7 @@
                 "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 10,
-                "gradientMode": "none",
+                "gradientMode": "scheme",
                 "hideFrom": {
                   "legend": false,
                   "tooltip": false,
@@ -1489,7 +1525,7 @@
               }
             }
           ],
-          "title": "배터리 전압 ($room)",
+          "title": "배터리 전압 (${room:text})",
           "type": "timeseries"
         },
         {
@@ -1611,11 +1647,112 @@
               }
             }
           ],
-          "title": "배터리 잔량 % ($room)",
+          "title": "배터리 잔량 % (${room:text})",
           "type": "timeseries"
         }
       ],
-      "title": "📊 상세 데이터 (방: $room)",
+      "title": "📊 상세 데이터 (방: ${room:text})",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 9,
+      "panels": [
+        {
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "iot-infinity"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "filterable": true
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "code"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 70
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 15
+          },
+          "id": 10,
+          "options": {
+            "showHeader": true,
+            "sortBy": [
+              {
+                "displayName": "time",
+                "desc": true
+              }
+            ]
+          },
+          "pluginVersion": "12.1.0",
+          "targets": [
+            {
+              "columns": [
+                {
+                  "selector": "timestamp",
+                  "text": "time",
+                  "type": "timestamp"
+                },
+                {
+                  "selector": "deviceId",
+                  "text": "device",
+                  "type": "string"
+                },
+                {
+                  "selector": "errorCode",
+                  "text": "code",
+                  "type": "number"
+                },
+                {
+                  "selector": "message",
+                  "text": "message",
+                  "type": "string"
+                }
+              ],
+              "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "iot-infinity"
+              },
+              "format": "table",
+              "parser": "backend",
+              "refId": "A",
+              "root_selector": "",
+              "source": "url",
+              "type": "json",
+              "url": "http://api:8080/api/errors?limit=200&from=${__from:date:iso}&to=${__to:date:iso}",
+              "url_options": {
+                "method": "GET"
+              }
+            }
+          ],
+          "title": "⚠️ 오류(Exception) 로그 — 노드가 blink+전송한 에러 목록",
+          "type": "table"
+        }
+      ],
+      "title": "⚠️ 오류 (Exception) 로그",
       "type": "row"
     }
   ],
@@ -1630,7 +1767,7 @@
     "list": [
       {
         "current": {
-          "text": "BRB",
+          "text": "아기 침대 옆",
           "value": "BRB"
         },
         "label": "방 (상세)",
@@ -1638,31 +1775,36 @@
         "options": [
           {
             "selected": true,
-            "text": "BRB",
+            "text": "아기 침대 옆",
             "value": "BRB"
           },
           {
             "selected": false,
-            "text": "BRO",
+            "text": "큰방 바깥",
             "value": "BRO"
           },
           {
             "selected": false,
-            "text": "TO",
+            "text": "화장실 바깥",
             "value": "TO"
           },
           {
             "selected": false,
-            "text": "RO",
+            "text": "거실",
             "value": "RO"
           },
           {
             "selected": false,
-            "text": "MR",
+            "text": "현관 주변",
             "value": "MR"
+          },
+          {
+            "selected": false,
+            "text": "test",
+            "value": "test"
           }
         ],
-        "query": "BRB,BRO,TO,RO,MR",
+        "query": "아기 침대 옆 : BRB, 큰방 바깥 : BRO, 화장실 바깥 : TO, 거실 : RO, 현관 주변 : MR, test : test",
         "type": "custom"
       }
     ]
