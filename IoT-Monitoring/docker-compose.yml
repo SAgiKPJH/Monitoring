@@ -53,19 +53,33 @@ services:
 
   grafana:
     <<: *common
-    # NOTE: keep Grafana recent enough for the Infinity plugin. The latest Infinity
-    # (>= 3.7.2) requires Grafana >= 11.6; pinning an older Grafana with the latest
-    # plugin causes a client-side "Minified React error #130" when panels render.
-    image: grafana/grafana:12.1.0
+    # NOTE: Grafana 와 Infinity 플러그인은 **버전 짝**이 맞아야 한다 (아래 GF_INSTALL_PLUGINS 참고).
+    #   - Grafana 11.6~12.2 + Infinity 3.11.1 이하
+    #   - Grafana 12.3+     + Infinity 3.11.2 이상  ← 현재 조합
+    # 어긋나면 패널이 안 뜨고 "Minified React error #130" 또는
+    # "Could not load plugin: 404 loading react/jsx-runtime" 가 난다.
+    # ⚠️ 버전을 올리면 Grafana DB 가 자동 마이그레이션되어 **다운그레이드 불가**
+    #    (되돌리려면 grafana_data 볼륨 삭제 → provisioning 으로 재구성).
+    image: grafana/grafana:${GRAFANA_VERSION:-13.1.2}
     container_name: iot-grafana
     depends_on:
       - api
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
-      GF_INSTALL_PLUGINS: yesoreyeram-infinity-datasource
-      GF_AUTH_ANONYMOUS_ENABLED: "true"
-      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      # Infinity 버전 고정 (재현성). Grafana 와 짝을 맞춰야 한다:
+      #   3.11.2+ 는 react/jsx-runtime 를 externalize → **Grafana 12.3.0 이상** 필요
+      #   3.11.1  이하는 번들에 포함        → Grafana 11.6 ~ 12.2 에서 사용
+      #   (플러그인이 선언한 grafanaDependency ">=11.6.0" 은 실제와 다르므로 신뢰하지 말 것)
+      GF_INSTALL_PLUGINS: yesoreyeram-infinity-datasource ${INFINITY_PLUGIN_VERSION:-3.11.2}
+      GF_AUTH_ANONYMOUS_ENABLED: "false"    # 로그인해야 대시보드 열람 가능
+      GF_USERS_ALLOW_SIGN_UP: "false"       # 자가 가입 차단 (관리자가 계정 생성)
+      # 로그인 유지 기간 — 미접속 N 뒤 자동 로그아웃 / 최대 유지 기간 (예: 12h, 7d, 30d)
+      GF_AUTH_LOGIN_MAXIMUM_INACTIVE_LIFETIME_DURATION: ${GRAFANA_SESSION_IDLE:-30d}
+      GF_AUTH_LOGIN_MAXIMUM_LIFETIME_DURATION: ${GRAFANA_SESSION_MAX:-90d}
+      # 로그인 실패 잠금 (5회 실패 시 5분 차단) — 무차별 대입 방어
+      GF_SECURITY_DISABLE_BRUTE_FORCE_LOGIN_PROTECTION: "false"
+      GF_LOG_LEVEL: ${GRAFANA_LOG_LEVEL:-info}   # 로그인 성공/실패가 로그에 남음
       GF_PANELS_DISABLE_SANITIZE_HTML: "true"   # allow the camera <img>/<iframe> in a Text panel
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}   # Slack incoming webhook (alerting provisioning에서 사용)
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/iot-monitoring.json

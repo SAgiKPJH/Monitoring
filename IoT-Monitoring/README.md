@@ -47,9 +47,12 @@ IoT-Monitoring/
 │   ├── Program.cs / Controllers / Models / Services
 │   └── Dockerfile
 ├── mongo/init/01-init.sh       # 앱 계정·컬렉션·인덱스 초기화
-├── grafana/provisioning/       # 데이터소스 + 대시보드 자동 프로비저닝
-│   ├── datasources/datasource.yml
-│   └── dashboards/iot-monitoring.json
+├── grafana/                    # 대시보드·알림 프로비저닝  → 운영 가이드: grafana/README.md
+│   ├── README.md               #   인증·세션·로그인 이력(IP) 확인 방법
+│   └── provisioning/
+│       ├── datasources/datasource.yml
+│       ├── dashboards/iot-monitoring.json
+│       └── alerting/           # 알림 규칙 + Slack 컨택트포인트
 └── firmware/
     ├── pico/pico_sensor_node/          # 라즈베리파이 피코 (송신)
     ├── uno/uno_rf_receiver/            # 우노 R3 (수신 → ESP)

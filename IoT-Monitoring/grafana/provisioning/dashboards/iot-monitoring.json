@@ -1757,7 +1757,7 @@
     }
   ],
   "preload": false,
-  "refresh": "30s",
+  "refresh": "15m",
   "schemaVersion": 41,
   "tags": [
     "iot",
@@ -1810,7 +1810,7 @@
     ]
   },
   "time": {
-    "from": "now-12h",
+    "from": "now-7d",
     "to": "now"
   },
   "timepicker": {},

@@ -308,3 +308,11 @@ groups:
               datasource: { type: __expr__, uid: __expr__ }
               conditions:
                 - evaluator: { type: lt, params: [10] }
+
+# 온도 규칙을 '높음/낮음' 으로 분리하면서 uid 가 바뀌었다.
+# 옛 uid 규칙이 Grafana DB 에 남아 알림이 중복 발송되므로 명시적으로 삭제한다.
+deleteRules:
+  - orgId: 1
+    uid: brb_temp_danger
+  - orgId: 1
+    uid: brb_temp_warn
