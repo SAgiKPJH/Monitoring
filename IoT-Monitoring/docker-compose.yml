@@ -72,6 +72,11 @@ services:
       #   3.11.1  이하는 번들에 포함        → Grafana 11.6 ~ 12.2 에서 사용
       #   (플러그인이 선언한 grafanaDependency ">=11.6.0" 은 실제와 다르므로 신뢰하지 말 것)
       GF_INSTALL_PLUGINS: yesoreyeram-infinity-datasource ${INFINITY_PLUGIN_VERSION:-3.11.2}
+      # 리버스 프록시 뒤 서브패스(/grafana) 서비스용.
+      #   ROOT_URL 은 외부에서 보이는 전체 주소 (끝에 / 필수), SERVE_FROM_SUB_PATH 는 그 경로로 자산 제공.
+      #   .env 미설정 시 기존처럼 IP:PORT 루트로 동작한다.
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://172.30.1.42:${GRAFANA_PORT:-3000}/}
+      GF_SERVER_SERVE_FROM_SUB_PATH: ${GRAFANA_SUBPATH:-false}
       GF_AUTH_ANONYMOUS_ENABLED: "false"    # 로그인해야 대시보드 열람 가능
       GF_USERS_ALLOW_SIGN_UP: "false"       # 자가 가입 차단 (관리자가 계정 생성)
       # 로그인 유지 기간 — 미접속 N 뒤 자동 로그아웃 / 최대 유지 기간 (예: 12h, 7d, 30d)
