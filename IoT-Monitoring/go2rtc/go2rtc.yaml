@@ -17,6 +17,9 @@ streams:
     - tuya://protect-us.ismartlife.me?email=${TUYA_EMAIL}&password=${TUYA_PASSWORD}&device_id=${TUYA_DEVICE_ID}&resolution=hd
     - ffmpeg:camera1#video=h264
 
+# 참고: resolution=sd 서브스트림도 시도해 봤으나 이 Tuya 클라우드 카메라는 제공하지 않아
+#       스트림이 뜨지 않았다 (실측). HD 단일 스트림 + 필요 시 h264 트랜스코딩으로 사용한다.
+
 # iOS/iPad(Safari)에서 WebRTC 재생 안 될 때 필수: go2rtc가 광고할 ICE 후보를 명시.
 # (데스크톱은 자동 후보로 되지만 iOS는 엄격해서 호스트 IP를 직접 줘야 함)
 webrtc:
