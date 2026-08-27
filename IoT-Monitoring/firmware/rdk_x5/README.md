@@ -122,75 +122,46 @@ journalctl -u rf-receiver -f
 RDK X5는 **TogetheROS.Bot(tros, ROS 2 Humble 기반)** 을 지원합니다. 아래처럼 **ROS 2 패키지로
 감싸면** `colcon build` / `ros2 run` / `ros2 launch` 로 관리·실행할 수 있습니다.
 
-### 패키지 구조
+### 패키지는 이미 만들어 뒀습니다 (`ros2_ws/`)
 ```
-~/ros2_ws/src/rdk_rf_receiver/
-├── package.xml
-├── CMakeLists.txt
-├── src/rdk_rf_receiver.c        ← 이 파일 복사
-└── launch/receiver.launch.py
-```
-
-### `package.xml`
-```xml
-<?xml version="1.0"?>
-<package format="3">
-  <name>rdk_rf_receiver</name>
-  <version>1.0.0</version>
-  <description>NRF24L01 -> API uplink receiver for RDK X5</description>
-  <maintainer email="you@example.com">you</maintainer>
-  <license>MIT</license>
-  <buildtool_depend>ament_cmake</buildtool_depend>
-  <export><build_type>ament_cmake</build_type></export>
-</package>
+ros2_ws/
+├── run.sh                       # 환경 source + ros2 launch (systemd에서 호출)
+├── rf-receiver.service          # 부팅 자동실행 (systemd)
+└── src/rdk_rf_receiver/
+    ├── package.xml
+    ├── CMakeLists.txt           # 상위의 ../../../rdk_rf_receiver.c 를 그대로 빌드(사본 X)
+    └── launch/receiver.launch.py
 ```
 
-### `CMakeLists.txt`
-```cmake
-cmake_minimum_required(VERSION 3.8)
-project(rdk_rf_receiver C)
-
-find_package(ament_cmake REQUIRED)
-find_package(CURL REQUIRED)
-
-add_executable(rdk_rf_receiver src/rdk_rf_receiver.c)
-target_link_libraries(rdk_rf_receiver ${CURL_LIBRARIES})   # GPIO로 CE 제어 시 'gpiod' 추가
-target_include_directories(rdk_rf_receiver PRIVATE ${CURL_INCLUDE_DIRS})
-
-install(TARGETS rdk_rf_receiver DESTINATION lib/${PROJECT_NAME})
-install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
-ament_package()
-```
-
-### `launch/receiver.launch.py`
-```python
-from launch import LaunchDescription
-from launch_ros.actions import Node
-
-def generate_launch_description():
-    return LaunchDescription([
-        Node(
-            package='rdk_rf_receiver',
-            executable='rdk_rf_receiver',
-            name='rf_receiver',
-            output='screen',
-        ),
-    ])
-```
-
-### 빌드 & 실행
+### 빌드 (제자리 in-place)
 ```bash
-source /opt/tros/humble/setup.bash      # tros 환경 (없으면 /opt/ros/humble/setup.bash)
-cd ~/ros2_ws
-colcon build --packages-select rdk_rf_receiver
-source install/setup.bash
-
-ros2 run rdk_rf_receiver rdk_rf_receiver           # 직접 실행
-# 또는
-ros2 launch rdk_rf_receiver receiver.launch.py     # launch 로 실행
+sudo apt install -y libcurl4-openssl-dev            # CE 3V3 직결이면 gpiod 불필요
+cd firmware/rdk_x5/ros2_ws
+source /opt/tros/humble/setup.bash                  # 없으면 /opt/ros/humble/setup.bash
+colcon build
 ```
-> spidev/gpiod 권한이 필요하면 사용자 그룹(`spi`, `gpio`)에 추가하거나 `sudo -E` 로 실행하세요.
-> (`sudo -E` 는 `source` 한 ROS 환경변수를 유지합니다.)
+> CMake가 `../../../rdk_rf_receiver.c` 를 참조하므로 **반드시 `firmware/rdk_x5/ros2_ws` 안에서** 빌드하세요(경로 일치).
+
+### 수동 실행 (확인용)
+```bash
+source install/setup.bash
+ros2 launch rdk_rf_receiver receiver.launch.py
+```
+> `/dev/spidev1.x` 는 `crw-rw-rw-` 라 일반 사용자로 접근됩니다(sudo 불필요).
+
+### 🔌 부팅 자동실행 (systemd)
+```bash
+chmod +x firmware/rdk_x5/ros2_ws/run.sh
+firmware/rdk_x5/ros2_ws/run.sh          # 1) 먼저 이 스크립트로 잘 뜨는지 확인 (Ctrl+C)
+
+# 2) rf-receiver.service 의 ExecStart 를 run.sh 실제 절대경로로, User 를 실제 계정으로 수정 후:
+sudo cp firmware/rdk_x5/ros2_ws/rf-receiver.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now rf-receiver
+journalctl -u rf-receiver -f            # 로그 실시간 확인
+```
+- 부팅 때마다 `ros2 launch` 자동 기동, 크래시 시 5초 후 재시작.
+- **코드 수정 후**: `colcon build` 다시 → `sudo systemctl restart rf-receiver`.
 
 ### (선택) ROS 토픽으로 발행하기
 지금 코드는 데이터를 **HTTP로만** 보냅니다. RDK X5의 **ROS 그래프(토픽)** 에도 올리고

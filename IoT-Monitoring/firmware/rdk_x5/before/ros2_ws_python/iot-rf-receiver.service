@@ -1,0 +1,15 @@
+[Unit]
+Description=IoT RF receiver (ROS 2 rclpy node)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sunrise
+# ↓↓↓ run.sh 의 실제 절대경로로, User 는 실제 계정으로 수정 ↓↓↓
+ExecStart=/home/sunrise/JJU/Receiver/ros2_iot_ws/run.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
