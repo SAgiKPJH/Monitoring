@@ -61,7 +61,7 @@ gpioinfo                # less 없으면 그냥 실행. "gpiochipN" + line offse
 
 ---
 
-## 3. 설정 (`rdk_rf_receiver.c` 상단)
+## 3. 설정 (`rf_common.h` 상단 — 단독 C · ROS 노드 공용)
 
 ```c
 #define SPI_DEV   "/dev/spidev1.1"   // 핀24=CS1=spidev1.1 (RDK X5는 RPi와 반대!). 핀26이면 spidev1.0
@@ -71,8 +71,11 @@ gpioinfo                # less 없으면 그냥 실행. "gpiochipN" + line offse
 #define API_URL   "http://172.30.1.42:8080/api/readings"
 #define ERROR_URL "http://172.30.1.42:8080/api/errors"
 #define API_KEY   ""                 // API의 API_KEY와 동일하게 (없으면 빈값)
+#define POLL_US   20000              // RX FIFO 폴링 주기(us). 줄이면 커널 SPI 로그가 폭증
 ```
 `RF_CHANNEL`(101)·주소("Node1")·`PAYLOAD_SIZE`(30)는 Pico와 일치하므로 그대로 두세요.
+
+> 이 헤더 하나만 고치면 **단독 C 버전과 ROS 2 노드에 동시에 반영**됩니다.
 
 ---
 
@@ -117,66 +120,121 @@ journalctl -u rf-receiver -f
 
 ---
 
-## 5. ROS 2 (TogetheROS.Bot)로 실행
+## 5. ROS 2 (TogetheROS.Bot)로 실행 — C++ rclcpp 노드
 
-RDK X5는 **TogetheROS.Bot(tros, ROS 2 Humble 기반)** 을 지원합니다. 아래처럼 **ROS 2 패키지로
-감싸면** `colcon build` / `ros2 run` / `ros2 launch` 로 관리·실행할 수 있습니다.
+RDK X5 는 **TogetheROS.Bot(tros, ROS 2 Humble 기반)** 을 지원합니다.
+현행 `ros2_ws/` 는 **진짜 ROS 2 노드**라 `ros2 node list` · `ros2 topic echo` 로 조회됩니다.
 
-### 패키지는 이미 만들어 뒀습니다 (`ros2_ws/`)
 ```
-ros2_ws/
-├── run.sh                       # 환경 source + ros2 launch (systemd에서 호출)
-├── rf-receiver.service          # 부팅 자동실행 (systemd)
-└── src/rdk_rf_receiver/
-    ├── package.xml
-    ├── CMakeLists.txt           # 상위의 ../../../rdk_rf_receiver.c 를 그대로 빌드(사본 X)
-    └── launch/receiver.launch.py
+node   : /rf_receiver
+topics : /iot/readings , /iot/errors     (std_msgs/String, JSON 문자열)
 ```
+수신 패킷을 **API 로 POST 하면서 동시에 토픽으로도 발행**합니다.
 
-### 빌드 (제자리 in-place)
+### 파일 구성
+```
+firmware/rdk_x5/
+├── rf_common.h                  # ★공용 로직 (SPI·프로토콜·중복제거·HTTP·설정)
+├── rdk_rf_receiver.c            # 단독 실행용 main() — ROS 없이 gcc 로 빌드
+├── ros2_ws/                     # 현행: C++ rclcpp 노드
+│   ├── run.sh                   #   환경 source + ros2 launch (systemd 가 호출)
+│   ├── rf-receiver.service      #   부팅 자동실행
+│   └── src/rdk_rf_receiver/
+│       ├── package.xml          #   rclcpp · std_msgs 의존
+│       ├── CMakeLists.txt       #   ../../.. 를 include 경로로 → rf_common.h 공유
+│       ├── src/rf_receiver_node.cpp
+│       └── launch/receiver.launch.py
+└── before/                      # 이전 구현 보관 (C 래핑판 · Python 판) — before/README.md
+```
+> **설정은 `rf_common.h` 상단 한 곳**에서만 바꿉니다 (`SPI_DEV`, `POLL_US`, `API_URL` …).
+> 단독 C 버전과 ROS 노드가 같은 헤더를 쓰므로 로직이 갈라지지 않습니다.
+
+### 빌드
 ```bash
 sudo apt install -y libcurl4-openssl-dev            # CE 3V3 직결이면 gpiod 불필요
 cd firmware/rdk_x5/ros2_ws
 source /opt/tros/humble/setup.bash                  # 없으면 /opt/ros/humble/setup.bash
 colcon build
 ```
-> CMake가 `../../../rdk_rf_receiver.c` 를 참조하므로 **반드시 `firmware/rdk_x5/ros2_ws` 안에서** 빌드하세요(경로 일치).
+> CMake 가 `../../..`(= `firmware/rdk_x5`)를 include 경로로 잡아 `rf_common.h` 를 찾습니다.
+> 따라서 **`firmware/rdk_x5/ros2_ws` 안에서** 빌드하세요.
 
-### 수동 실행 (확인용)
+### 실행 & 조회
 ```bash
 source install/setup.bash
 ros2 launch rdk_rf_receiver receiver.launch.py
+
+# 다른 터미널에서
+ros2 node list                    # → /rf_receiver
+ros2 topic echo /iot/readings     # 수신 데이터 실시간 (JSON)
+ros2 topic hz /iot/readings
 ```
 > `/dev/spidev1.x` 는 `crw-rw-rw-` 라 일반 사용자로 접근됩니다(sudo 불필요).
 
 ### 🔌 부팅 자동실행 (systemd)
 ```bash
-chmod +x firmware/rdk_x5/ros2_ws/run.sh
-firmware/rdk_x5/ros2_ws/run.sh          # 1) 먼저 이 스크립트로 잘 뜨는지 확인 (Ctrl+C)
+chmod +x run.sh
+./run.sh                                  # 1) 먼저 직접 실행해 확인 (Ctrl+C)
 
-# 2) rf-receiver.service 의 ExecStart 를 run.sh 실제 절대경로로, User 를 실제 계정으로 수정 후:
-sudo cp firmware/rdk_x5/ros2_ws/rf-receiver.service /etc/systemd/system/
+# 2) rf-receiver.service 의 ExecStart 를 run.sh 절대경로로, User 를 실제 계정으로 수정 후:
+sudo cp rf-receiver.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now rf-receiver
-journalctl -u rf-receiver -f            # 로그 실시간 확인
+journalctl -u rf-receiver -f
 ```
-- 부팅 때마다 `ros2 launch` 자동 기동, 크래시 시 5초 후 재시작.
-- **코드 수정 후**: `colcon build` 다시 → `sudo systemctl restart rf-receiver`.
-
-### (선택) ROS 토픽으로 발행하기
-지금 코드는 데이터를 **HTTP로만** 보냅니다. RDK X5의 **ROS 그래프(토픽)** 에도 올리고
-싶으면, C용 클라이언트 라이브러리 **rclc**로 퍼블리셔를 추가하면 됩니다:
-
-- `find_package(rclc REQUIRED)` / `rcl` / `std_msgs` 의존성 추가
-- 수신 시 `handle_payload()`에서 JSON 문자열을 `std_msgs/msg/String`으로 `/iot/readings`,
-  에러는 `/iot/errors` 토픽에 publish
-- 그러면 `ros2 topic echo /iot/readings` 로 실시간 확인 가능
-
-필요하면 rclc 퍼블리셔가 포함된 버전으로 확장해 드리겠습니다.
+- **코드 수정 후**: `colcon build` → `sudo systemctl restart rf-receiver`
+- ⚠️ NRF 는 하나뿐이므로 **단독 C 버전과 ROS 노드를 동시에 실행하지 마세요** (SPI 충돌).
 
 ---
 
-## 6. 확인 & 참고
+## 6. 디스크 관리 (⚠️ 중요)
+
+### 증상
+```
+OSError: [Errno 28] No space left on device
+df -h  →  /dev/root  57G  55G  0  100% /
+```
+
+### 원인
+커널이 **SPI 전송마다 로그를 남긴다**(`spidev spi1.0: xfer len 2 ...`).
+수신기가 RX FIFO 를 폴링하므로 폴링 주기가 짧으면 초당 수백~수천 줄이 쌓인다.
+실제로 `/var/log/syslog` 와 `/var/log/kern.log` 가 각각 **24GB** 까지 자랐다.
+
+### 즉시 복구
+```bash
+sudo du -xh --max-depth=1 /var 2>/dev/null | sort -rh | head    # 어디가 찼는지
+sudo truncate -s 0 /var/log/syslog /var/log/kern.log            # rm 아니라 truncate
+df -h
+```
+> `rm` 으로 지우면 rsyslog 가 파일을 열고 있어 **공간이 반환되지 않는다.**
+
+### 재발 방지
+```bash
+# 1) 커널 SPI 디버그 메시지를 rsyslog 단계에서 폐기 (재부팅해도 유지)
+echo ':msg, contains, "spidev spi" stop' | sudo tee /etc/rsyslog.d/10-drop-spidev.conf
+sudo systemctl restart rsyslog
+
+# 2) 동적 디버그가 켜져 있으면 끄기
+echo 'module spidev -p' | sudo tee /sys/kernel/debug/dynamic_debug/control
+
+# 3) 저널 상한
+sudo sed -i 's/^#\?SystemMaxUse=.*/SystemMaxUse=200M/' /etc/systemd/journald.conf
+sudo systemctl restart systemd-journald
+```
+
+### 코드 차원의 완화 (이미 반영됨)
+| 항목 | 값 | 효과 |
+|---|---|---|
+| `POLL_US` | 2ms → **20ms** | SPI 전송 1/10 → 커널 로그도 1/10 |
+| FIFO 처리 | 1개 → **전부 드레인** | 느린 폴링에도 패킷 손실 없음 |
+| NRF 오류 로그 | 매초 → **상태 변화 시 + 5분마다** | 배선 빠진 채 방치돼도 로그 폭주 없음 |
+| `run.sh` | 3일 지난 `~/.ros/log` 정리 | 재시작 반복 시 로그 디렉터리 누적 방지 |
+
+> Pico 는 5분마다 3연속 전송하고 NRF RX FIFO 가 3개를 담으므로 **20ms 폴링으로도 손실이 없다.**
+
+---
+
+## 7. 확인 & 참고
 
 ```bash
 curl "http://172.30.1.42:8080/api/readings/latest?deviceId=BRB"
