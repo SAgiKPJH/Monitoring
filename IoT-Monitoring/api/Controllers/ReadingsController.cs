@@ -55,6 +55,40 @@ public class ReadingsController : ControllerBase
         return Ok(readings);
     }
 
+    // GET /api/readings/status?devices=BRB,BRO,TO,RO,MR
+    //   기기별 마지막 수신 경과 시간 + 한 줄 요약. 연결 상태 패널과 "데이터 끊김" 알림이 사용.
+    [HttpGet("status")]
+    public async Task<IActionResult> GetStatus([FromQuery] string? devices)
+    {
+        var known = (devices ?? "BRB,BRO,TO,RO,MR")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        var list = await _service.GetStatusAsync(known);
+
+        // 알림 메시지에 그대로 넣을 한 줄 요약:  BRB ✅ · BRO ❌ · TO ⚠️ ...
+        var summary = string.Join(" · ", list.Select(d => $"{d.DeviceId} {d.Icon}"));
+        var offline = list.Where(d => d.State == "offline").Select(d => d.DeviceId).ToArray();
+        var stale = list.Where(d => d.State == "stale").Select(d => d.DeviceId).ToArray();
+
+        return Ok(new
+        {
+            summary,
+            offlineCount = offline.Length,
+            staleCount = stale.Length,
+            offline,
+            stale,
+            devices = list.Select(d => new
+            {
+                d.DeviceId,
+                d.LastSeen,
+                d.AgeSeconds,
+                d.AgeMinutes,
+                d.State,
+                d.Icon,
+            }),
+        });
+    }
+
     // GET /api/readings/latest?deviceId=
     [HttpGet("latest")]
     public async Task<IActionResult> GetLatest([FromQuery] string? deviceId)

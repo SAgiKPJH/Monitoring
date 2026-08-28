@@ -32,6 +32,7 @@ app.MapGet("/", () => Results.Ok(new
         "POST /api/readings",
         "GET  /api/readings?deviceId=&from=&to=&limit=",
         "GET  /api/readings/latest?deviceId=",
+        "GET  /api/readings/status?devices=BRB,BRO,TO,RO,MR",
         "POST /api/errors",
         "GET  /api/errors?deviceId=&from=&to=&limit=",
         "GET  /api/errors/latest?deviceId=",

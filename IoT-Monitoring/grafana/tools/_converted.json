@@ -1022,78 +1022,17 @@
         {
           "id": 10,
           "type": "stat",
-          "title": "📡 노드 연결 상태",
-          "description": "마지막 데이터 수신 후 경과 시간.\n\n초록 정상(30분 미만) · 주황 지연(30분↑) · 빨강 끊김(60분↑) · 회색 데이터 없음",
+          "title": "📡 노드 연결 상태 (30분↑ ⚠️ · 60분↑ ❌)",
           "gridPos": {
             "h": 8,
             "w": 12,
             "x": 0,
             "y": 14
           },
-          "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "iot-infinity"
-          },
-          "targets": [
-            {
-              "refId": "A",
-              "datasource": {
-                "type": "yesoreyeram-infinity-datasource",
-                "uid": "iot-infinity"
-              },
-              "type": "json",
-              "source": "url",
-              "parser": "backend",
-              "format": "table",
-              "url": "http://api:8080/api/readings/status?devices=BRB,BRO,TO,RO,MR",
-              "url_options": {
-                "method": "GET"
-              },
-              "root_selector": "devices",
-              "columns": [
-                {
-                  "selector": "deviceId",
-                  "text": "노드",
-                  "type": "string"
-                },
-                {
-                  "selector": "ageMinutes",
-                  "text": "경과",
-                  "type": "number"
-                }
-              ]
-            }
-          ],
-          "transformations": [
-            {
-              "id": "rowsToFields",
-              "options": {}
-            }
-          ],
-          "options": {
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "orientation": "horizontal",
-            "textMode": "value_and_name",
-            "colorMode": "background",
-            "graphMode": "none",
-            "justifyMode": "center",
-            "wideLayout": true
-          },
           "fieldConfig": {
             "defaults": {
               "unit": "m",
               "decimals": 0,
-              "min": 0,
-              "noValue": "➖",
-              "color": {
-                "mode": "thresholds"
-              },
               "mappings": [
                 {
                   "type": "range",
@@ -1101,9 +1040,45 @@
                     "from": -999,
                     "to": -0.1,
                     "result": {
-                      "text": "➖ 없음",
+                      "text": "➖ 데이터 없음",
                       "color": "text",
                       "index": 0
+                    }
+                  }
+                },
+                {
+                  "type": "range",
+                  "options": {
+                    "from": 0,
+                    "to": 29.99,
+                    "result": {
+                      "text": "✅ 정상",
+                      "color": "green",
+                      "index": 1
+                    }
+                  }
+                },
+                {
+                  "type": "range",
+                  "options": {
+                    "from": 30,
+                    "to": 59.99,
+                    "result": {
+                      "text": "⚠️ 지연",
+                      "color": "orange",
+                      "index": 2
+                    }
+                  }
+                },
+                {
+                  "type": "range",
+                  "options": {
+                    "from": 60,
+                    "to": 999999,
+                    "result": {
+                      "text": "❌ 끊김",
+                      "color": "red",
+                      "index": 3
                     }
                   }
                 }
@@ -1112,19 +1087,23 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "value": 0,
+                    "color": "green"
                   },
                   {
-                    "color": "orange",
-                    "value": 30
+                    "value": 30,
+                    "color": "orange"
                   },
                   {
-                    "color": "red",
-                    "value": 60
+                    "value": 60,
+                    "color": "red"
                   }
                 ]
-              }
+              },
+              "color": {
+                "mode": "thresholds"
+              },
+              "noValue": "➖ 없음"
             },
             "overrides": [
               {
@@ -1188,6 +1167,145 @@
                 ]
               }
             ]
+          },
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "center",
+            "orientation": "horizontal",
+            "percentChangeColorMode": "standard",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showPercentChange": false,
+            "textMode": "value_and_name",
+            "wideLayout": true
+          },
+          "description": "각 노드의 마지막 데이터 수신 후 경과 시간.\n\n✅ 정상(30분 미만) · ⚠️ 지연(30분↑) · ❌ 끊김(60분↑) · ➖ 데이터 없음",
+          "targets": [
+            {
+              "columns": [
+                {
+                  "selector": "ageMinutes",
+                  "text": "BRB",
+                  "type": "number"
+                }
+              ],
+              "format": "table",
+              "parser": "backend",
+              "root_selector": "devices",
+              "source": "url",
+              "type": "json",
+              "url": "http://api:8080/api/readings/status?devices=BRB",
+              "url_options": {
+                "method": "GET"
+              },
+              "refId": "A",
+              "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "iot-infinity"
+              }
+            },
+            {
+              "columns": [
+                {
+                  "selector": "ageMinutes",
+                  "text": "BRO",
+                  "type": "number"
+                }
+              ],
+              "format": "table",
+              "parser": "backend",
+              "root_selector": "devices",
+              "source": "url",
+              "type": "json",
+              "url": "http://api:8080/api/readings/status?devices=BRO",
+              "url_options": {
+                "method": "GET"
+              },
+              "refId": "B",
+              "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "iot-infinity"
+              }
+            },
+            {
+              "columns": [
+                {
+                  "selector": "ageMinutes",
+                  "text": "TO",
+                  "type": "number"
+                }
+              ],
+              "format": "table",
+              "parser": "backend",
+              "root_selector": "devices",
+              "source": "url",
+              "type": "json",
+              "url": "http://api:8080/api/readings/status?devices=TO",
+              "url_options": {
+                "method": "GET"
+              },
+              "refId": "C",
+              "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "iot-infinity"
+              }
+            },
+            {
+              "columns": [
+                {
+                  "selector": "ageMinutes",
+                  "text": "RO",
+                  "type": "number"
+                }
+              ],
+              "format": "table",
+              "parser": "backend",
+              "root_selector": "devices",
+              "source": "url",
+              "type": "json",
+              "url": "http://api:8080/api/readings/status?devices=RO",
+              "url_options": {
+                "method": "GET"
+              },
+              "refId": "D",
+              "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "iot-infinity"
+              }
+            },
+            {
+              "columns": [
+                {
+                  "selector": "ageMinutes",
+                  "text": "MR",
+                  "type": "number"
+                }
+              ],
+              "format": "table",
+              "parser": "backend",
+              "root_selector": "devices",
+              "source": "url",
+              "type": "json",
+              "url": "http://api:8080/api/readings/status?devices=MR",
+              "url_options": {
+                "method": "GET"
+              },
+              "refId": "E",
+              "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "iot-infinity"
+              }
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "iot-infinity"
           }
         },
         {
@@ -1999,7 +2117,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "IoT 집 모니터링",
+  "title": "IoT 집 모니터링 Copy",
   "uid": "iot-monitoring",
   "version": 1
 }

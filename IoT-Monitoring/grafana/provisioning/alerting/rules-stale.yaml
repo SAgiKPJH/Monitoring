@@ -1,0 +1,422 @@
+# 데이터 끊김 알림 — 방마다 30분(경고) / 60분(연결 끊김).
+# API 의 /api/readings/status 가 마지막 수신 후 경과 분(ageMinutes)을 계산해 주므로
+# Grafana 는 그 값을 임계값과 비교하기만 하면 된다.
+#   ageMinutes = -1  → 한 번도 데이터 없음 (임계값에 안 걸림, 알림 안 감)
+# 평가 주기는 5분 (끊김 감지에 1분 단위 정밀도는 불필요).
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: iot-stale-BRB
+    folder: IoT Alerts
+    interval: 5m
+    rules:
+      - uid: brb_stale_warn
+        title: 데이터 경고 (BRB)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 경고, deviceId: BRB }
+        annotations:
+          summary: '📡 경고 — BRB(아기 침대 옆) 30분째 데이터 없음 (마지막 수신 후 {{ printf "%.0f" $values.B.Value }}분)'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/status?devices=BRB
+              url_options: { method: GET }
+              root_selector: devices
+              filterExpression: "deviceId == 'BRB'"
+              columns:
+                - { selector: ageMinutes, text: ageMinutes, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: gt, params: [30] }
+
+      - uid: brb_stale_offline
+        title: 데이터 연결 끊김 (BRB)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 위험, deviceId: BRB }
+        annotations:
+          summary: '📡 연결 끊김 — BRB(아기 침대 옆) 60분째 데이터 없음 (마지막 수신 후 {{ printf "%.0f" $values.B.Value }}분)'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/status?devices=BRB
+              url_options: { method: GET }
+              root_selector: devices
+              filterExpression: "deviceId == 'BRB'"
+              columns:
+                - { selector: ageMinutes, text: ageMinutes, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: gt, params: [60] }
+
+  - orgId: 1
+    name: iot-stale-BRO
+    folder: IoT Alerts
+    interval: 5m
+    rules:
+      - uid: bro_stale_warn
+        title: 데이터 경고 (BRO)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 경고, deviceId: BRO }
+        annotations:
+          summary: '📡 경고 — BRO(큰방 바깥) 30분째 데이터 없음 (마지막 수신 후 {{ printf "%.0f" $values.B.Value }}분)'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/status?devices=BRO
+              url_options: { method: GET }
+              root_selector: devices
+              filterExpression: "deviceId == 'BRO'"
+              columns:
+                - { selector: ageMinutes, text: ageMinutes, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: gt, params: [30] }
+
+      - uid: bro_stale_offline
+        title: 데이터 연결 끊김 (BRO)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 위험, deviceId: BRO }
+        annotations:
+          summary: '📡 연결 끊김 — BRO(큰방 바깥) 60분째 데이터 없음 (마지막 수신 후 {{ printf "%.0f" $values.B.Value }}분)'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/status?devices=BRO
+              url_options: { method: GET }
+              root_selector: devices
+              filterExpression: "deviceId == 'BRO'"
+              columns:
+                - { selector: ageMinutes, text: ageMinutes, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: gt, params: [60] }
+
+  - orgId: 1
+    name: iot-stale-TO
+    folder: IoT Alerts
+    interval: 5m
+    rules:
+      - uid: to_stale_warn
+        title: 데이터 경고 (TO)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 경고, deviceId: TO }
+        annotations:
+          summary: '📡 경고 — TO(화장실 바깥) 30분째 데이터 없음 (마지막 수신 후 {{ printf "%.0f" $values.B.Value }}분)'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/status?devices=TO
+              url_options: { method: GET }
+              root_selector: devices
+              filterExpression: "deviceId == 'TO'"
+              columns:
+                - { selector: ageMinutes, text: ageMinutes, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: gt, params: [30] }
+
+      - uid: to_stale_offline
+        title: 데이터 연결 끊김 (TO)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 위험, deviceId: TO }
+        annotations:
+          summary: '📡 연결 끊김 — TO(화장실 바깥) 60분째 데이터 없음 (마지막 수신 후 {{ printf "%.0f" $values.B.Value }}분)'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/status?devices=TO
+              url_options: { method: GET }
+              root_selector: devices
+              filterExpression: "deviceId == 'TO'"
+              columns:
+                - { selector: ageMinutes, text: ageMinutes, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: gt, params: [60] }
+
+  - orgId: 1
+    name: iot-stale-RO
+    folder: IoT Alerts
+    interval: 5m
+    rules:
+      - uid: ro_stale_warn
+        title: 데이터 경고 (RO)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 경고, deviceId: RO }
+        annotations:
+          summary: '📡 경고 — RO(거실) 30분째 데이터 없음 (마지막 수신 후 {{ printf "%.0f" $values.B.Value }}분)'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/status?devices=RO
+              url_options: { method: GET }
+              root_selector: devices
+              filterExpression: "deviceId == 'RO'"
+              columns:
+                - { selector: ageMinutes, text: ageMinutes, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: gt, params: [30] }
+
+      - uid: ro_stale_offline
+        title: 데이터 연결 끊김 (RO)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 위험, deviceId: RO }
+        annotations:
+          summary: '📡 연결 끊김 — RO(거실) 60분째 데이터 없음 (마지막 수신 후 {{ printf "%.0f" $values.B.Value }}분)'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/status?devices=RO
+              url_options: { method: GET }
+              root_selector: devices
+              filterExpression: "deviceId == 'RO'"
+              columns:
+                - { selector: ageMinutes, text: ageMinutes, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: gt, params: [60] }
+
+  - orgId: 1
+    name: iot-stale-MR
+    folder: IoT Alerts
+    interval: 5m
+    rules:
+      - uid: mr_stale_warn
+        title: 데이터 경고 (MR)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 경고, deviceId: MR }
+        annotations:
+          summary: '📡 경고 — MR(현관 주변) 30분째 데이터 없음 (마지막 수신 후 {{ printf "%.0f" $values.B.Value }}분)'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/status?devices=MR
+              url_options: { method: GET }
+              root_selector: devices
+              filterExpression: "deviceId == 'MR'"
+              columns:
+                - { selector: ageMinutes, text: ageMinutes, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: gt, params: [30] }
+
+      - uid: mr_stale_offline
+        title: 데이터 연결 끊김 (MR)
+        condition: C
+        for: 0s
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 위험, deviceId: MR }
+        annotations:
+          summary: '📡 연결 끊김 — MR(현관 주변) 60분째 데이터 없음 (마지막 수신 후 {{ printf "%.0f" $values.B.Value }}분)'
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/status?devices=MR
+              url_options: { method: GET }
+              root_selector: devices
+              filterExpression: "deviceId == 'MR'"
+              columns:
+                - { selector: ageMinutes, text: ageMinutes, type: number }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: gt, params: [60] }

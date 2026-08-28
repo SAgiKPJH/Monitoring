@@ -58,6 +58,43 @@ public class ReadingsService
             .ToListAsync();
     }
 
+    /// <summary>
+    /// 등록된 기기별 마지막 수신 시각과 경과 초. 데이터 끊김 감지·표시에 쓴다.
+    /// knownDevices 에 있으나 한 번도 데이터가 없는 기기는 lastSeen=null, ageSeconds=-1 로 돌려준다
+    /// (Grafana 에서 "아직 없음"과 "끊김"을 구분할 수 있게).
+    /// </summary>
+    public async Task<List<DeviceStatus>> GetStatusAsync(IEnumerable<string> knownDevices)
+    {
+        // deviceId 별 최신 timestamp 한 번에 집계
+        var latest = await _collection.Aggregate()
+            .Group(r => r.DeviceId, g => new { DeviceId = g.Key, Last = g.Max(x => x.Timestamp) })
+            .ToListAsync();
+
+        var map = latest.ToDictionary(x => x.DeviceId, x => x.Last);
+        var now = DateTime.UtcNow;
+        var result = new List<DeviceStatus>();
+
+        // 알려진 기기 + 실제로 데이터가 있었던 기기를 합집합으로
+        foreach (var id in knownDevices.Concat(map.Keys).Distinct())
+        {
+            if (map.TryGetValue(id, out var last))
+            {
+                var age = (long)(now - last).TotalSeconds;
+                result.Add(new DeviceStatus
+                {
+                    DeviceId = id,
+                    LastSeen = last,
+                    AgeSeconds = age < 0 ? 0 : age,
+                });
+            }
+            else
+            {
+                result.Add(new DeviceStatus { DeviceId = id, LastSeen = null, AgeSeconds = -1 });
+            }
+        }
+        return result.OrderBy(r => r.DeviceId).ToList();
+    }
+
     public async Task<SensorReading?> GetLatestAsync(string? deviceId)
     {
         var fb = Builders<SensorReading>.Filter;
