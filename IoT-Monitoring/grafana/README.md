@@ -102,6 +102,8 @@ GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/
 |---|---|
 | `provisioning/dashboards/iot-monitoring.json` | 대시보드 (평면도 · 상세 · 오류 로그) |
 | `provisioning/alerting/rules.yaml` | 알림 규칙 (온도/습도/배터리) |
+| `provisioning/alerting/rules-stale.yaml` | 데이터 끊김 알림 (30분 경고 / 60분 연결 끊김) |
+| `provisioning/alerting/rules-comfort.yaml` | 환기 추천 알림 (BRB ≥ 20℃ 이고 TO ≤ BRB → 밖이 더 시원) |
 | `provisioning/alerting/slack.yaml` | Slack 컨택트포인트 · 라우팅 |
 | `provisioning/datasources/` | Infinity 데이터소스 |
 

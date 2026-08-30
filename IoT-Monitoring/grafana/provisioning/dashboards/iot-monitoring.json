@@ -362,9 +362,9 @@
               "name": "BRO temp",
               "placement": {
                 "height": 34,
-                "left": 56,
+                "left": 195,
                 "rotation": 0,
-                "top": 189,
+                "top": 351,
                 "width": 84
               },
               "type": "metric-value"
@@ -398,9 +398,9 @@
               "name": "BRO light",
               "placement": {
                 "height": 28,
-                "left": 44,
+                "left": 195,
                 "rotation": 0,
-                "top": 161,
+                "top": 326,
                 "width": 40
               },
               "type": "metric-value"
@@ -433,9 +433,9 @@
               "name": "BRO batt",
               "placement": {
                 "height": 28,
-                "left": 100,
+                "left": 231,
                 "rotation": 0,
-                "top": 161,
+                "top": 326,
                 "width": 40
               },
               "type": "metric-value"
@@ -472,9 +472,9 @@
               "name": "RO temp",
               "placement": {
                 "height": 34,
-                "left": 16,
+                "left": 56,
                 "rotation": 0,
-                "top": 334,
+                "top": 189,
                 "width": 84
               },
               "type": "metric-value"
@@ -507,9 +507,9 @@
               "name": "RO light",
               "placement": {
                 "height": 28,
-                "left": 16,
+                "left": 56,
                 "rotation": 0,
-                "top": 298,
+                "top": 161,
                 "width": 40
               },
               "type": "metric-value"
@@ -542,9 +542,9 @@
               "name": "RO batt",
               "placement": {
                 "height": 28,
-                "left": 58,
+                "left": 100,
                 "rotation": 0,
-                "top": 298,
+                "top": 161,
                 "width": 40
               },
               "type": "metric-value"
@@ -581,9 +581,9 @@
               "name": "TO temp",
               "placement": {
                 "height": 34,
-                "left": 193,
+                "left": 32,
                 "rotation": 0,
-                "top": 354,
+                "top": 337,
                 "width": 84
               },
               "type": "metric-value"
@@ -616,9 +616,9 @@
               "name": "TO light",
               "placement": {
                 "height": 28,
-                "left": 195,
+                "left": 36,
                 "rotation": 0,
-                "top": 326,
+                "top": 306,
                 "width": 40
               },
               "type": "metric-value"
@@ -651,9 +651,9 @@
               "name": "TO batt",
               "placement": {
                 "height": 28,
-                "left": 231,
+                "left": 76,
                 "rotation": 0,
-                "top": 326,
+                "top": 306,
                 "width": 40
               },
               "type": "metric-value"

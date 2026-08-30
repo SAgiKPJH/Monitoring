@@ -1,0 +1,83 @@
+# 환기 추천 알림 — "밖이 더 시원해요".
+#   조건: BRB(아기 침대 옆) 온도 >= 20℃  AND  TO(화장실 바깥) 온도 <= BRB 온도
+#   → 방이 따뜻한데 밖이 같거나 더 시원하면 창문 열기 좋은 때.
+#
+# 구성: A/B 두 방의 최신 온도 → C/D(reduce last) → E(Math: 조건식, 참=1 거짓=0) → F(threshold > 0)
+#   · 20℃ 문턱은 방(BRB) 기준. TO 기준으로 바꾸려면 E 의 "$C >= 20" 을 "$D >= 20" 으로.
+#   · 온도가 경계(같은 값) 근처에서 흔들려 발생/해제가 반복되지 않도록 for: 10m (10분 지속 시 발생).
+#   · 평가 5분 주기(센서 전송 주기와 동일). 해제 메시지도 전송(slack.yaml disableResolveMessage=false).
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: iot-comfort
+    folder: IoT Alerts
+    interval: 5m
+    rules:
+      - uid: comfort_outside_cooler
+        title: 밖이 더 시원 (TO ≤ BRB)
+        condition: F
+        for: 10m
+        noDataState: OK
+        execErrState: OK
+        labels: { severity: 정보, deviceId: BRB }
+        annotations:
+          summary: '🌬️ 밖이 더 시원해요 — 창문 열기 좋은 때. BRB(아기 침대 옆) {{ printf "%.1f" $values.C.Value }}℃ ≥ TO(화장실 바깥) {{ printf "%.1f" $values.D.Value }}℃'
+        data:
+          # A: BRB 최신 온도
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: A
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/latest?deviceId=BRB
+              url_options: { method: GET }
+              root_selector: ""
+              columns:
+                - { selector: temperature, text: temperature, type: number }
+          # B: TO 최신 온도
+          - refId: B
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: iot-infinity
+            model:
+              refId: B
+              datasource: { type: yesoreyeram-infinity-datasource, uid: iot-infinity }
+              type: json
+              source: url
+              parser: backend
+              format: table
+              url: http://api:8080/api/readings/latest?deviceId=TO
+              url_options: { method: GET }
+              root_selector: ""
+              columns:
+                - { selector: temperature, text: temperature, type: number }
+          # C/D: 표 → 숫자 하나
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: reduce, reducer: last, expression: A, datasource: { type: __expr__, uid: __expr__ } }
+          - refId: D
+            datasourceUid: __expr__
+            model: { refId: D, type: reduce, reducer: last, expression: B, datasource: { type: __expr__, uid: __expr__ } }
+          # E: 조건식 — 참이면 1, 거짓이면 0
+          - refId: E
+            datasourceUid: __expr__
+            model:
+              refId: E
+              type: math
+              expression: "$C >= 20 && $D <= $C"
+              datasource: { type: __expr__, uid: __expr__ }
+          # F: E 가 0 보다 크면 발생
+          - refId: F
+            datasourceUid: __expr__
+            model:
+              refId: F
+              type: threshold
+              expression: E
+              datasource: { type: __expr__, uid: __expr__ }
+              conditions:
+                - evaluator: { type: gt, params: [0] }
