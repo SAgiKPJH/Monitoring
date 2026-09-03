@@ -785,7 +785,7 @@
         },
         "zoomToContent": false
       },
-      "description": "방별 최신값입니다. 아이콘 기준:\n\n**☀️ 밝기 (조도 %)**\n- 🌙 어두움: <20%\n- 🌥️ 보통: 20~60%\n- ☀️ 밝음: ≥60%\n\n**🔋 배터리 (잔량 %)**\n- 🪫 부족(빨강): <20%\n- 🟠 보통(주황): 20~50%\n- 🔋 충분(초록): ≥50%\n\n**🌡️ 온도**: 파랑<18 · 초록 18~26 · 주황 26~28 · 빨강 ≥28℃\n\n**🏠 방 위치**\n- BRB = 아기 침대 옆\n- MR = 현관 주변\n- BRO = 큰방 바깥\n- TO = 화장실 바깥\n- RO = 거실",
+      "description": "방별 최신값입니다. 아이콘 기준:\n\n**☀️ 밝기 (조도 %)**\n- 🌙 어두움: <20%\n- 🌥️ 보통: 20~60%\n- ☀️ 밝음: ≥60%\n\n**🔋 배터리 (잔량 %)**\n- 🪫 부족(빨강): <20%\n- 🟠 보통(주황): 20~50%\n- 🔋 충분(초록): ≥50%\n\n**🌡️ 온도**: 파랑<18 · 초록 18~26 · 주황 26~28 · 빨강 ≥28℃\n\n**🏠 방 위치**\n- BRB = 아기 침대 옆\n- MR = 현관 주변\n- BRO = 큰방 바깥\n- TO = 화장실 바깥\n- RO = 거실\n\n⏱️ 1시간 이상 데이터가 안 들어온 방은 데이터 없음과 동일하게 `-` 로 표시",
       "targets": [
         {
           "columns": [
@@ -815,7 +815,7 @@
           "root_selector": "",
           "source": "url",
           "type": "json",
-          "url": "http://api:8080/api/readings/latest?deviceId=BRB",
+          "url": "http://api:8080/api/readings/latest?deviceId=BRB&maxAgeMinutes=60",
           "url_options": {
             "method": "GET"
           },
@@ -853,7 +853,7 @@
           "root_selector": "",
           "source": "url",
           "type": "json",
-          "url": "http://api:8080/api/readings/latest?deviceId=BRO",
+          "url": "http://api:8080/api/readings/latest?deviceId=BRO&maxAgeMinutes=60",
           "url_options": {
             "method": "GET"
           },
@@ -891,7 +891,7 @@
           "root_selector": "",
           "source": "url",
           "type": "json",
-          "url": "http://api:8080/api/readings/latest?deviceId=TO",
+          "url": "http://api:8080/api/readings/latest?deviceId=TO&maxAgeMinutes=60",
           "url_options": {
             "method": "GET"
           },
@@ -929,7 +929,7 @@
           "root_selector": "",
           "source": "url",
           "type": "json",
-          "url": "http://api:8080/api/readings/latest?deviceId=RO",
+          "url": "http://api:8080/api/readings/latest?deviceId=RO&maxAgeMinutes=60",
           "url_options": {
             "method": "GET"
           },
@@ -967,7 +967,7 @@
           "root_selector": "",
           "source": "url",
           "type": "json",
-          "url": "http://api:8080/api/readings/latest?deviceId=MR",
+          "url": "http://api:8080/api/readings/latest?deviceId=MR&maxAgeMinutes=60",
           "url_options": {
             "method": "GET"
           },
@@ -1045,7 +1045,7 @@
               "source": "url",
               "parser": "backend",
               "format": "table",
-              "url": "http://api:8080/api/readings/status?devices=BRB,BRO,TO,RO,MR",
+              "url": "http://api:8080/api/readings/status?devices=BRB,MR,RO,TO,BRO",
               "url_options": {
                 "method": "GET"
               },

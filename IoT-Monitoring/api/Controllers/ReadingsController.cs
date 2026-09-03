@@ -55,15 +55,16 @@ public class ReadingsController : ControllerBase
         return Ok(readings);
     }
 
-    // GET /api/readings/status?devices=BRB,BRO,TO,RO,MR
+    // GET /api/readings/status?devices=BRB,MR,RO,TO,BRO   (devices 순서 = 응답 순서)
     //   기기별 마지막 수신 경과 시간 + 한 줄 요약. 연결 상태 패널과 "데이터 끊김" 알림이 사용.
     [HttpGet("status")]
-    public async Task<IActionResult> GetStatus([FromQuery] string? devices)
+    public async Task<IActionResult> GetStatus([FromQuery] string? devices,
+                                              [FromQuery] bool onlyKnown = false)
     {
-        var known = (devices ?? "BRB,BRO,TO,RO,MR")
+        var known = (devices ?? "BRB,MR,RO,TO,BRO")
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-        var list = await _service.GetStatusAsync(known);
+        var list = await _service.GetStatusAsync(known, onlyKnown);
 
         // 알림 메시지에 그대로 넣을 한 줄 요약:  BRB ✅ · BRO ❌ · TO ⚠️ ...
         var summary = string.Join(" · ", list.Select(d => $"{d.DeviceId} {d.Icon}"));
@@ -89,14 +90,20 @@ public class ReadingsController : ControllerBase
         });
     }
 
-    // GET /api/readings/latest?deviceId=
+    // GET /api/readings/latest?deviceId=&maxAgeMinutes=
+    //   maxAgeMinutes 가 주어지면 그보다 오래된 값은 "데이터 없음"과 동일하게 취급한다
+    //   (평면도에서 1시간 이상 끊긴 노드를 '-' 로 보이게).
     [HttpGet("latest")]
-    public async Task<IActionResult> GetLatest([FromQuery] string? deviceId)
+    public async Task<IActionResult> GetLatest([FromQuery] string? deviceId,
+                                               [FromQuery] int? maxAgeMinutes = null)
     {
         var reading = await _service.GetLatestAsync(deviceId);
-        if (reading is null)
+        var tooOld = reading is not null && maxAgeMinutes > 0
+            && reading.Timestamp < DateTime.UtcNow.AddMinutes(-maxAgeMinutes.Value);
+
+        if (reading is null || tooOld)
         {
-            // No data yet for this device: return 200 with null fields so Grafana Canvas shows
+            // No (or stale) data: return 200 with null fields so Grafana Canvas shows
             // the "No value" placeholder ("-") instead of "Field Not Found".
             return Ok(new
             {

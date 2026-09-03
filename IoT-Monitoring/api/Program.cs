@@ -1,4 +1,9 @@
+using IoTMonitoring.Api.Models;
 using IoTMonitoring.Api.Services;
+using MongoDB.Bson.Serialization;
+
+// DeviceId 값 객체를 MongoDB 에 평범한 문자열로 저장/조회한다.
+BsonSerializer.RegisterSerializer(typeof(DeviceId), new DeviceIdBsonSerializer());
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,8 +36,8 @@ app.MapGet("/", () => Results.Ok(new
     {
         "POST /api/readings",
         "GET  /api/readings?deviceId=&from=&to=&limit=",
-        "GET  /api/readings/latest?deviceId=",
-        "GET  /api/readings/status?devices=BRB,BRO,TO,RO,MR",
+        "GET  /api/readings/latest?deviceId=&maxAgeMinutes=",
+        "GET  /api/readings/status?devices=BRB,MR,RO,TO,BRO",
         "POST /api/errors",
         "GET  /api/errors?deviceId=&from=&to=&limit=",
         "GET  /api/errors/latest?deviceId=",
