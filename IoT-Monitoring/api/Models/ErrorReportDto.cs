@@ -8,6 +8,6 @@ namespace IoTMonitoring.Api.Models;
 /// The extra "type" field is ignored during binding.
 /// </summary>
 public record ErrorReportDto(
-    [Required] string DeviceId,
+    [Required, DeviceId] string DeviceId,
     int ErrorCode,
     long Sequence);

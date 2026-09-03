@@ -7,7 +7,7 @@ namespace IoTMonitoring.Api.Models;
 /// Input-only, so it is an immutable record (bound case-insensitively from camelCase JSON).
 /// </summary>
 public record SensorReadingDto(
-    [Required] string DeviceId,
+    [Required, DeviceId] string DeviceId,
     double Temperature,
     double Humidity,
     int Light,

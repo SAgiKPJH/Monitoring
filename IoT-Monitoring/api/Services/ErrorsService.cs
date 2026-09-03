@@ -34,7 +34,7 @@ public class ErrorsService
     {
         var report = new ErrorReport
         {
-            DeviceId = dto.DeviceId,
+            DeviceId = new DeviceId(dto.DeviceId),   // 새 값이므로 엄격 검증
             ErrorCode = dto.ErrorCode,
             Message = DescribeCode(dto.ErrorCode),
             Sequence = dto.Sequence,
@@ -50,7 +50,7 @@ public class ErrorsService
         var filter = fb.Empty;
 
         if (!string.IsNullOrWhiteSpace(deviceId))
-            filter &= fb.Eq(r => r.DeviceId, deviceId);
+            filter &= fb.Eq(r => r.DeviceId, DeviceId.FromStorage(deviceId));
         if (from.HasValue)
             filter &= fb.Gte(r => r.Timestamp, from.Value.ToUniversalTime());
         if (to.HasValue)
@@ -68,7 +68,7 @@ public class ErrorsService
         var fb = Builders<ErrorReport>.Filter;
         var filter = string.IsNullOrWhiteSpace(deviceId)
             ? fb.Empty
-            : fb.Eq(r => r.DeviceId, deviceId);
+            : fb.Eq(r => r.DeviceId, DeviceId.FromStorage(deviceId));
 
         return await _collection
             .Find(filter)

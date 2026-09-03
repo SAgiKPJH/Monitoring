@@ -24,7 +24,7 @@ public class ReadingsService
     {
         var reading = new SensorReading
         {
-            DeviceId = dto.DeviceId,
+            DeviceId = new DeviceId(dto.DeviceId),   // 새 값이므로 엄격 검증
             Temperature = dto.Temperature,
             Humidity = dto.Humidity,
             Light = dto.Light,
@@ -44,7 +44,7 @@ public class ReadingsService
         var filter = fb.Empty;
 
         if (!string.IsNullOrWhiteSpace(deviceId))
-            filter &= fb.Eq(r => r.DeviceId, deviceId);
+            filter &= fb.Eq(r => r.DeviceId, DeviceId.FromStorage(deviceId));
         if (from.HasValue)
             filter &= fb.Gte(r => r.Timestamp, from.Value.ToUniversalTime());
         if (to.HasValue)
@@ -63,36 +63,42 @@ public class ReadingsService
     /// knownDevices 에 있으나 한 번도 데이터가 없는 기기는 lastSeen=null, ageSeconds=-1 로 돌려준다
     /// (Grafana 에서 "아직 없음"과 "끊김"을 구분할 수 있게).
     /// </summary>
-    public async Task<List<DeviceStatus>> GetStatusAsync(IEnumerable<string> knownDevices)
+    public async Task<List<DeviceStatus>> GetStatusAsync(IEnumerable<string> knownDevices, bool onlyKnown = false)
     {
         // deviceId 별 최신 timestamp 한 번에 집계
         var latest = await _collection.Aggregate()
             .Group(r => r.DeviceId, g => new { DeviceId = g.Key, Last = g.Max(x => x.Timestamp) })
             .ToListAsync();
 
-        var map = latest.ToDictionary(x => x.DeviceId, x => x.Last);
+        var map = latest.ToDictionary(x => x.DeviceId.Value, x => x.Last);
         var now = DateTime.UtcNow;
         var result = new List<DeviceStatus>();
 
-        // 알려진 기기 + 실제로 데이터가 있었던 기기를 합집합으로
-        foreach (var id in knownDevices.Concat(map.Keys).Distinct())
+        // 기본은 "요청 목록 + DB 에서 발견된 기기" 합집합 → 새 노드를 추가하면 설정 없이 자동으로 잡힌다.
+        var raw = onlyKnown
+            ? knownDevices.Distinct().ToList()
+            : knownDevices.Concat(map.Keys).Distinct().ToList();
+
+        foreach (var rawId in raw)
         {
-            if (map.TryGetValue(id, out var last))
-            {
-                var age = (long)(now - last).TotalSeconds;
-                result.Add(new DeviceStatus
-                {
-                    DeviceId = id,
-                    LastSeen = last,
-                    AgeSeconds = age < 0 ? 0 : age,
-                });
-            }
-            else
-            {
-                result.Add(new DeviceStatus { DeviceId = id, LastSeen = null, AgeSeconds = -1 });
-            }
+            if (!DeviceId.TryCreate(rawId, out var id))
+                continue;                     // 과거 손상 데이터("!" · "xxxxxx")는 표시에서 제외
+
+            var hasData = map.TryGetValue(rawId, out var last);
+            var age = hasData ? (long)(now - last).TotalSeconds : -1;
+            result.Add(new DeviceStatus(id, hasData ? last : null, age));
         }
-        return result.OrderBy(r => r.DeviceId).ToList();
+        // 표시 순서: 요청 목록(knownDevices) 순서를 그대로 유지하고,
+        // 목록에 없는(자동 발견) 기기는 그 뒤에 알파벳순으로 붙인다.
+        var order = new Dictionary<string, int>(StringComparer.Ordinal);
+        var idx = 0;
+        foreach (var d in knownDevices)
+            if (!order.ContainsKey(d)) order[d] = idx++;
+
+        return result
+            .OrderBy(r => order.TryGetValue(r.DeviceId.Value, out var i) ? i : int.MaxValue)
+            .ThenBy(r => r.DeviceId.Value, StringComparer.Ordinal)
+            .ToList();
     }
 
     public async Task<SensorReading?> GetLatestAsync(string? deviceId)
@@ -100,7 +106,7 @@ public class ReadingsService
         var fb = Builders<SensorReading>.Filter;
         var filter = string.IsNullOrWhiteSpace(deviceId)
             ? fb.Empty
-            : fb.Eq(r => r.DeviceId, deviceId);
+            : fb.Eq(r => r.DeviceId, DeviceId.FromStorage(deviceId));
 
         return await _collection
             .Find(filter)

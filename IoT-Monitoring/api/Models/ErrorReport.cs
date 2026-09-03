@@ -14,7 +14,7 @@ public class ErrorReport
     public string? Id { get; set; }
 
     [BsonElement("deviceId")]
-    public string DeviceId { get; set; } = "unknown";
+    public DeviceId DeviceId { get; set; }
 
     [BsonElement("errorCode")]
     public int ErrorCode { get; set; }

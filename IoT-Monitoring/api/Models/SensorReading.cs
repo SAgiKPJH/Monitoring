@@ -13,7 +13,7 @@ public class SensorReading
     public string? Id { get; set; }
 
     [BsonElement("deviceId")]
-    public string DeviceId { get; set; } = "unknown";
+    public DeviceId DeviceId { get; set; }
 
     [BsonElement("temperature")]
     public double Temperature { get; set; }
