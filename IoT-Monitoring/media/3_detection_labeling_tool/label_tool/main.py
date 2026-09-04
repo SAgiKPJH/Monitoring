@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ─────────────────────────────────────────────────────────────
 # 실행 (이 폴더에서):
-#   cd D:\Code\Monitoring\IoT-Monitoring\media\3_Detection_Labeling_Tool\label_tool
+#   cd D:\Code\Monitoring\IoT-Monitoring\media\3_detection_labeling_tool\label_tool
 #   ..\..\.venv\Scripts\python.exe main.py                       # 기본 (D:\carved\Cut → D:\carved\yolo_baby)
 #   ..\..\.venv\Scripts\python.exe main.py --src <폴더|mp4> --out <출력>
 #   키: r 랜덤점프 · n/p 영상 · 트랙바+a/d 1프레임·w/s 1초 · 드래그 박스(여러개, u 취소)

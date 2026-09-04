@@ -11,7 +11,7 @@
 
 | 파일 | 역할 |
 |---|---|
-| `label_tool.py` | 진입점 (CLI 인자 파싱, 실행) |
+| `main.py` | 진입점 (CLI 인자 파싱, 실행) |
 | `labeler_ui.py` | 창/키보드/트랙바 상태 관리 및 메인 루프 |
 | `labeler_view.py` | 화면 오버레이 렌더링 + 마우스 드래그 박스 입력 |
 | `labeler_io.py` | 영상 목록/열기, JPEG·YOLO 라벨 읽기/쓰기 |
@@ -23,10 +23,10 @@
 D:\Code\Monitoring\IoT-Monitoring\media\.venv\Scripts\python.exe -m pip install opencv-python numpy
 
 # 실행 (기본값: --src D:\carved\Cut  --out D:\carved\yolo_baby)
-D:\Code\Monitoring\IoT-Monitoring\media\.venv\Scripts\python.exe label_tool.py
+D:\Code\Monitoring\IoT-Monitoring\media\.venv\Scripts\python.exe main.py
 
 # 경로 지정 실행 (src는 mp4 폴더 또는 단일 mp4 파일)
-python label_tool.py --src D:\carved\Cut --out D:\carved\yolo_baby
+python main.py --src D:\carved\Cut --out D:\carved\yolo_baby
 ```
 
 ## 키 조작

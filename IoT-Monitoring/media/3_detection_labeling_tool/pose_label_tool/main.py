@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ─────────────────────────────────────────────────────────────
 # 실행 (이 폴더에서):
-#   cd D:\Code\Monitoring\IoT-Monitoring\media\3_Detection_Labeling_Tool\pose_label_tool
+#   cd D:\Code\Monitoring\IoT-Monitoring\media\3_detection_labeling_tool\pose_label_tool
 #   ..\..\.venv\Scripts\python.exe main.py                       # 기본 (D:\carved\Cut → D:\carved\yolo_baby_pose)
 #   ..\..\.venv\Scripts\python.exe main.py --src <폴더|mp4> --out <출력>
 #   키: 좌클릭=관절 배치(순서 안내) · v/우클릭=안보임 · b 뒤로 · c 초기화 · z 2배확대

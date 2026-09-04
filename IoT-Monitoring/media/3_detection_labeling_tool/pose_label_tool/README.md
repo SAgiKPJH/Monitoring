@@ -13,7 +13,7 @@ JPEG) + 라벨(txt)을 저장하는 툴입니다. 프레임당 아기 1명을 �
 
 | 파일 | 역할 |
 |---|---|
-| `pose_label_tool.py` | 진입점 (CLI 인자 파싱, 실행) |
+| `main.py` | 진입점 (CLI 인자 파싱, 실행) |
 | `pose_ui.py` | 상태 초기화, 키 매핑, 메인 이벤트 루프 |
 | `pose_nav.py` | 영상 열기/탐색, 트랙바, 뷰 갱신 (PoseTool 믹스인) |
 | `pose_edit.py` | 키포인트 배치/스킵/되돌리기/저장 로직 (PoseTool 믹스인) |
@@ -28,10 +28,10 @@ JPEG) + 라벨(txt)을 저장하는 툴입니다. 프레임당 아기 1명을 �
 D:\Code\Monitoring\IoT-Monitoring\media\.venv\Scripts\python.exe -m pip install opencv-python numpy
 
 # 실행 (기본값: --src D:\carved\Cut  --out D:\carved\yolo_baby_pose)
-D:\Code\Monitoring\IoT-Monitoring\media\.venv\Scripts\python.exe pose_label_tool.py
+D:\Code\Monitoring\IoT-Monitoring\media\.venv\Scripts\python.exe main.py
 
 # 경로 지정 실행 (src는 mp4 폴더 또는 단일 mp4 파일)
-python pose_label_tool.py --src D:\carved\Cut --out D:\carved\yolo_baby_pose
+python main.py --src D:\carved\Cut --out D:\carved\yolo_baby_pose
 ```
 
 ## 키 조작
