@@ -1,0 +1,4 @@
+directory,filename,type
+,metrics.csv,csv
+best,model.pth,model
+60,model.pth,model

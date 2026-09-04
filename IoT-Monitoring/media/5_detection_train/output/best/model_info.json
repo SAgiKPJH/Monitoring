@@ -1,0 +1,4 @@
+{
+  "label_info": "{\"inference_info\": \"{\\\"input_size\\\": 640, \\\"label_info\\\": {\\\"label_count\\\": 1, \\\"label_0\\\": {\\\"code\\\": 0, \\\"name\\\": \\\"baby\\\"}}}\"}",
+  "inference_info": "{}"
+}

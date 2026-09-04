@@ -1,0 +1,30 @@
+{
+  "version": "baby_od_v1.0.0_cpu",
+  "hyperparameter": {
+    "framework": "pytorch",
+    "network_name": "yolo11n",
+    "input_size": 640,
+    "epoch": 40,
+    "save_epoch": 0,
+    "batch_size": 8,
+    "train_ratio": 0.8,
+    "optimizer": "adam",
+    "lr": 0.001,
+    "using_amp": false,
+    "using_gpu": false,
+    "validation_save_random": false,
+    "normalize_mean": 0.0,
+    "normalize_stdev": 1.0,
+    "criterion": "CrossEntropyLoss",
+    "loss_eps": 0,
+    "conf_thres": 0.35,
+    "iou_thres": 0.5,
+    "weight_decay": 0.0005,
+    "augmentation": {
+      "horizontal_flip": true,
+      "vertical_flip": true,
+      "brightness": 0.3,
+      "contrast": 0.3
+    }
+  }
+}
