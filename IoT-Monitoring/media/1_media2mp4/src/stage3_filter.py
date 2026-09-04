@@ -1,7 +1,8 @@
-"""stage3 — 정적 영상 제거 + N초 컷 → Cut.
+"""stage3 — N초 컷 → Cut (전체 클립, 무손실 스트림 카피).
 
-스캔 캐시에서 MOTION 판정된 것만, 비디오·오디오 모두 N초에서 잘라 무손실 스트림 카피.
-exclude.txt(사용자가 직접 지운 파일)는 건너뜀. 이미 있는 결과도 건너뜀(증분).
+Convert 의 모든 클립을 비디오·오디오 N초에서 잘라 Cut 으로 (재인코딩 없음).
+정적 영상 제거는 하지 않음 — 그건 마지막 prune 단계가 담당(scan 결과 기준).
+exclude.txt(직접 지운 파일)는 건너뜀. 이미 있는 결과도 건너뜀(증분).
 """
 import subprocess
 import threading
@@ -9,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from .ffmpeg_tools import find_ffmpeg
-from .cache_util import load_cache, classify, load_exclude
+from .cache_util import load_exclude
 
 FFMPEG = find_ffmpeg()
 
@@ -29,19 +30,15 @@ def export_one(src, dst, seconds, no_audio=False):
     return None
 
 
-def run(convert_dir, cut_dir, cache_path, *, seconds=8.0, workers=8,
-        thresh_mean=0.12, thresh_max=2.0, no_audio=False, exclude_path=None):
+def run(convert_dir, cut_dir, *, seconds=8.0, workers=8,
+        no_audio=False, exclude_path=None):
     src_dir, dst_dir = Path(convert_dir), Path(cut_dir)
     dst_dir.mkdir(parents=True, exist_ok=True)
-    done = load_cache(cache_path)
-    movers = [r["file"] for r in done.values()
-              if classify(r, thresh_mean, thresh_max) == "MOTION"]
-    movers = [f for f in movers if (src_dir / f).exists()]
     excl = load_exclude(exclude_path or (dst_dir.parent / "exclude.txt"))
-    movers = [f for f in movers if f not in excl]
-    todo = [f for f in movers if not (dst_dir / f).exists()]
-    print(f"  MOTION {len(movers)}개 (제외 {len(excl)}) / 이미 있음 "
-          f"{len(movers) - len(todo)}개 / 남은 {len(todo)}개 → {dst_dir}")
+    files = [f.name for f in sorted(src_dir.glob("*.mp4")) if f.name not in excl]
+    todo = [f for f in files if not (dst_dir / f).exists()]
+    print(f"  전체 {len(files)}개 (제외 {len(excl)}) / 이미 있음 "
+          f"{len(files) - len(todo)}개 / 남은 {len(todo)}개 → {dst_dir}")
     lock = threading.Lock()
     n, fails = 0, []
     with ThreadPoolExecutor(max_workers=workers) as ex:

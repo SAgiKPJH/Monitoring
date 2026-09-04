@@ -13,10 +13,12 @@ Convert.py — .media → mp4 데이터셋 파이프라인 (단계별 오케스�
     python Convert.py convert scan    # 인자로 특정 단계만 실행 (RUN 무시)
 
 각 단계 구현은 src/ 안에 있고, 여기서는 하나씩 호출만 합니다:
-    1 convert : .media → mp4              (src/stage1_convert.py)
-    2 scan    : 변화량(YDIF) 스캔·리포트  (src/stage2_scan.py)
-    3 filter  : 정적 제거 + 8초 컷 → Cut  (src/stage3_filter.py)
-    4 resize  : 해상도 축소               (src/stage4_resize.py)
+    1 convert : .media → mp4                        (src/stage1_convert.py)
+    2 filter  : 8초 컷 (전체, 무손실) → Cut          (src/stage3_filter.py)
+    3 resize  : 해상도 축소 → resized                (src/stage4_resize.py)
+    4 scan    : 변화량(YDIF) 스캔 (resized 기준·빠름)  (src/stage2_scan.py)
+    5 prune   : 낮은 변화량 제거 (Cut·resized 에서 STATIC 삭제)  (src/stage5_prune.py)
+    6 drop_convert : (선택) Convert 삭제·Cut 유지 — 완료 후 한 번만
 """
 import os
 import sys
@@ -37,7 +39,10 @@ REPORT_TXT  = WORK_DIR + r"\motion_scores.txt"      # 변화량 리포트
 EXCLUDE_TXT = WORK_DIR + r"\exclude.txt"            # 제외 목록 (직접 지운 파일)
 
 # ══════════════════════ 단계 ON / OFF ══════════════════════
-RUN = {"convert": True, "scan": True, "filter": True, "resize": False}
+RUN = {"convert": True, "filter": True, "resize": True, "scan": True,
+       "prune": True, "drop_convert": False}
+#   drop_convert 는 완료 후 수동으로만: python Convert.py drop_convert
+#   (자동으로 켜면 재실행 때 Convert 가 없어 전량 재변환됨)
 
 # ══════════════════════ 파라미터 ══════════════════════
 TIME_OFFSET = -9.0     # .media 내장시각(UTC) 보정 시간 (이 카메라는 -9)
@@ -50,11 +55,13 @@ NO_AUDIO    = False    # True 면 오디오 제외
 WORKERS     = min(16, os.cpu_count() or 8)
 # ═════════════════════════════════════════════════════════════
 
-from src import stage1_convert, stage2_scan, stage3_filter, stage4_resize  # noqa: E402
+import shutil  # noqa: E402
+from src import (stage1_convert, stage2_scan, stage3_filter,  # noqa: E402
+                 stage4_resize, stage5_prune)
 
 
 def _banner(num, name, desc):
-    print(f"\n{'=' * 62}\n [{num}] {name:<8} {desc}\n{'=' * 62}", flush=True)
+    print(f"\n{'=' * 62}\n [{num}] {name:<12} {desc}\n{'=' * 62}", flush=True)
 
 
 def main():
@@ -67,21 +74,33 @@ def main():
         stage1_convert.run(INPUT_DIR, CONVERT_DIR, time_offset=TIME_OFFSET,
                            no_audio=NO_AUDIO, workers=WORKERS)
 
-    if run["scan"]:
-        _banner(2, "scan", "변화량(YDIF) 스캔 + 리포트")
-        stage2_scan.run(CONVERT_DIR, CACHE_PATH, seconds=SECONDS, workers=WORKERS,
-                        thresh_mean=THRESH_MEAN, thresh_max=THRESH_MAX, txt_path=REPORT_TXT)
-
     if run["filter"]:
-        _banner(3, "filter", f"정적 제거 + {SECONDS:.0f}초 컷 → {CUT_DIR}")
-        stage3_filter.run(CONVERT_DIR, CUT_DIR, CACHE_PATH, seconds=SECONDS, workers=WORKERS,
-                          thresh_mean=THRESH_MEAN, thresh_max=THRESH_MAX,
+        _banner(2, "filter", f"{SECONDS:.0f}초 컷 (전체) → {CUT_DIR}")
+        stage3_filter.run(CONVERT_DIR, CUT_DIR, seconds=SECONDS, workers=WORKERS,
                           no_audio=NO_AUDIO, exclude_path=EXCLUDE_TXT)
 
     if run["resize"]:
-        _banner(4, "resize", f"{WIDTH}px 축소 → {RESIZED_DIR}")
+        _banner(3, "resize", f"{WIDTH}px 축소 → {RESIZED_DIR}")
         stage4_resize.run(CUT_DIR, RESIZED_DIR, width=WIDTH, crf=CRF, seconds=SECONDS,
                           workers=WORKERS, no_audio=NO_AUDIO, exclude_path=EXCLUDE_TXT)
+
+    if run["scan"]:
+        _banner(4, "scan", f"변화량(YDIF) 스캔 (resized 기준) + 리포트")
+        stage2_scan.run(RESIZED_DIR, CACHE_PATH, seconds=SECONDS, workers=WORKERS,
+                        thresh_mean=THRESH_MEAN, thresh_max=THRESH_MAX, txt_path=REPORT_TXT)
+
+    if run["prune"]:
+        _banner(5, "prune", f"낮은 변화량 제거 (Cut·resized 에서 STATIC 삭제)")
+        stage5_prune.run(CUT_DIR, RESIZED_DIR, CACHE_PATH,
+                         thresh_mean=THRESH_MEAN, thresh_max=THRESH_MAX)
+
+    if run["drop_convert"]:
+        _banner(6, "drop_convert", f"Convert 삭제 (Cut 유지): {CONVERT_DIR}")
+        if os.path.isdir(CONVERT_DIR):
+            shutil.rmtree(CONVERT_DIR)
+            print(f"  Convert 삭제 완료 — .media 원본으로 언제든 재변환 가능")
+        else:
+            print("  Convert 폴더 없음 (이미 삭제됨)")
 
     print(f"\n[완료] 총 {time.time() - t0:.0f}초")
 
