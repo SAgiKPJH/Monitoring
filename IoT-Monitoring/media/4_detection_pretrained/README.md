@@ -33,10 +33,12 @@ cd D:\Code\Monitoring\IoT-Monitoring\media\4_detection_pretrained
 
 ## 모델
 
+이 폴더는 **사전학습(pretrained) 모델만** 씁니다. 학습한 baby 모델 추론은 `..\6_detection_trained_inference`.
+
 | 역할 | 기본값 | 비고 |
 |---|---|---|
-| 감지 | `D:\carved\yolo_baby_output\best\model.pth` | 파인튜닝 baby (state_dict/.pt/.onnx 자동 인식). 학습 중이면 `..._85\best\model.pth` 백업 사용 |
-| 포즈 | `yolo11n-pose.pt` | COCO 17 사전학습 — 아기 도메인 약함(참고용). 파인튜닝 전까지 골격이 부정확할 수 있음 |
+| 감지 | `yolo11m.pt` (COCO person) | 이름만 주면 자동 다운로드. `DET_CLASSES=[0]`(person) |
+| 포즈 | `yolo11n-pose.pt` | COCO 17 사전학습 — 아기 도메인 약함(참고용). 파인튜닝 전까지 골격 부정확 |
 
 ## 구성
 

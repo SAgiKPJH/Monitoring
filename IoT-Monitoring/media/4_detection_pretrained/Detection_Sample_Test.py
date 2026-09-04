@@ -14,9 +14,9 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # ══════════════════════ 설정 ══════════════════════
-SRC_DIR = r"D:\carved\yolo_baby\images"                       # 학습에 쓴 이미지 폴더
-DET_MODEL   = r"D:\carved\yolo_baby_output\best\model.pth"    # 파인튜닝 baby (학습 결과 확인용)
-DET_CLASSES = None                                            # baby 단일 클래스 → 전체
+SRC_DIR = r"D:\carved\yolo_baby\images"                       # 시험할 이미지(jpg) 폴더
+DET_MODEL   = "yolo11m.pt"        # 사전학습 COCO (이 폴더는 pretrained 만 사용)
+DET_CLASSES = [0]                 # 0=person (COCO)
 POSE_MODEL  = "yolo11n-pose.pt"
 CONF = 0.20
 N_SAMPLES = 5
