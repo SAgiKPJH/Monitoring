@@ -12,10 +12,22 @@ SKELETON = [(5, 7), (7, 9), (6, 8), (8, 10), (5, 6), (5, 11), (6, 12), (11, 12),
             (11, 13), (13, 15), (12, 14), (14, 16), (0, 5), (0, 6)]
 
 
+def _names_from_info(pth_path):
+    """model.pth 옆 model_info.json 에서 {id: name} 로드 (OD_Training_Standard 저장 포맷).
+    없거나 파싱 실패 시 단일 클래스 {0: 'baby'}."""
+    import json
+    try:
+        raw = json.loads(pth_path.with_name("model_info.json").read_text(encoding="utf-8"))
+        li = json.loads(json.loads(raw["label_info"])["inference_info"])["label_info"]
+        return {i: li[f"label_{i}"]["name"] for i in range(int(li["label_count"]))}
+    except Exception:
+        return {0: "baby"}
+
+
 def load_detector(path: str):
     """감지 모델 → ultralytics YOLO.
     - 사전학습 이름/.pt(예: yolo11m.pt) 또는 .onnx → 그대로 (자동 다운로드)
-    - OD_Training_Standard state_dict(.pth) → yolo11n 으로 재구성 (baby)
+    - OD_Training_Standard state_dict(.pth) → yolo11n 으로 재구성 (nc·클래스명은 model_info.json)
     """
     from ultralytics import YOLO
     p = Path(path)
@@ -27,13 +39,14 @@ def load_detector(path: str):
         return YOLO(str(p))
     from ultralytics.nn.tasks import DetectionModel
     state = ckpt.get("state_dict", ckpt) if isinstance(ckpt, dict) else ckpt
-    model = DetectionModel(cfg="yolo11n.yaml", ch=3, nc=1, verbose=False)
+    names = _names_from_info(p)                         # 1클래스(baby)·2클래스(baby+face) 자동
+    model = DetectionModel(cfg="yolo11n.yaml", ch=3, nc=len(names), verbose=False)
     try:
         model.load_state_dict(state)
     except RuntimeError:
         model.load_state_dict({k.split(".", 1)[1]: v for k, v in state.items() if "." in k})
-    model.names = {0: "baby"}
-    tmp = Path(tempfile.gettempdir()) / "detpretrained_tmp.pt"
+    model.names = names
+    tmp = Path(tempfile.gettempdir()) / f"det_nc{len(names)}_tmp.pt"
     torch.save({"model": model, "train_args": {"task": "detect"}}, str(tmp))
     return YOLO(str(tmp))
 
