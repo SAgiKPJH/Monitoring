@@ -1,0 +1,4 @@
+# torch/torchvision 은 Dockerfile 에서 CPU 휠로 먼저 설치됨
+ultralytics
+numpy
+opencv-python

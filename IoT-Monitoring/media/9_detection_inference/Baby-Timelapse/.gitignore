@@ -1,0 +1,10 @@
+# 로컬 설정(전송 경로 등, 비밀 포함) — .env_sample 만 커밋
+.env
+# SSH 개인키(비밀!) — 절대 커밋 금지
+id_rsa
+id_rsa.pub
+*.pem
+# 상대경로 스테이징(캡처 원본) — 전송 후 삭제되는 임시물
+captures/
+# 테스트 산출물
+testfile.txt
