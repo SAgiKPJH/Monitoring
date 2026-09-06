@@ -1,0 +1,31 @@
+# 14_export_BPU/docker-compose.yml — OE 툴체인 docker 로 .bin 변환 (x64 Windows/Linux 공통)
+#   변환 일괄:   docker compose run --rm convert
+#   대화형 셸:   docker compose run --rm shell
+#   OE 버전:     OE_TAG=v1.2.8 docker compose run --rm convert   (Windows PowerShell: $env:OE_TAG="v1.2.8")
+# media 전체를 /work 로 마운트 → convert.sh 가 ../15_rdk_x5_runtime/models 에 .bin 을 복사한다.
+services:
+  convert:
+    build:
+      context: .
+      args:
+        OE_TAG: ${OE_TAG:-v1.2.8}
+    image: baby-bpu-convert:${OE_TAG:-v1.2.8}
+    platform: linux/amd64
+    volumes:
+      - ..:/work
+    working_dir: /work/14_export_BPU
+    command: ["bash", "convert.sh"]
+
+  shell:
+    build:
+      context: .
+      args:
+        OE_TAG: ${OE_TAG:-v1.2.8}
+    image: baby-bpu-convert:${OE_TAG:-v1.2.8}
+    platform: linux/amd64
+    volumes:
+      - ..:/work
+    working_dir: /work/14_export_BPU
+    command: ["bash"]
+    stdin_open: true
+    tty: true

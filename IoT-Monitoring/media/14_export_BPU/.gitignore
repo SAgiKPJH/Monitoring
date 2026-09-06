@@ -1,0 +1,6 @@
+# export/변환 산출물(용량 큼) — 스크립트로 재생성 가능
+onnx/
+out/
+calib/
+bin/
+*.log
