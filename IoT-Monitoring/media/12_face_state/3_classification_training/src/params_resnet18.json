@@ -1,0 +1,28 @@
+{
+  "version": "face_state_resnet18_v1.0.0",
+  "hyperparameter": {
+    "framework": "pytorch",
+    "network_name": "resnet18",
+    "epoch": 80,
+    "save_epoch": 0,
+    "batch_size": 16,
+    "lr": 0.001,
+    "optimizer_name": "Adam",
+    "criterion": "CrossEntropyLoss",
+    "input_size": 128,
+    "normalize_mean": 0.5,
+    "normalize_stdev": 0.5,
+    "using_gpu": true,
+    "using_amp": false,
+    "train_ratio": 0.8,
+    "validation_save_random": false,
+    "loss_eps": 0.0001,
+    "augmentation": {
+      "horizontal_flip": true,
+      "rotation": 15,
+      "brightness": 0.2,
+      "contrast": 0.2,
+      "noise": 0.02
+    }
+  }
+}

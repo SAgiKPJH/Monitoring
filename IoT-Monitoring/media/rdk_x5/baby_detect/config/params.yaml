@@ -1,0 +1,19 @@
+# baby_detect 설정 일원화 파일 — 코드의 DEFAULTS 와 동일 값 유지 (Training_Standard)
+/**:
+  ros__parameters:
+    stream_url: "rtsp://127.0.0.1:8554/babycam"   # go2rtc RTSP 주소
+    model_path: "~/models/best.onnx"              # .onnx(CPU) 또는 .bin(BPU)
+    backend: "auto"                               # auto | onnx | bpu
+    infer_hz: 2.0                                 # 초당 추론 횟수
+    conf_thres: 0.35
+    iou_thres: 0.5
+    present_on_frames: 3                          # 연속 검출 N회 → present on
+    present_off_frames: 5                         # 연속 미검출 M회 → present off
+    publish_annotated: false                      # true 면 ~/annotated 발행(cv_bridge 필요)
+    input_size: 640                               # 모델 입력 한 변(export imgsz 와 일치)
+    class_name: "baby"
+    frame_stale_s: 5.0                            # 이보다 오래된 프레임은 미검출 취급
+    reconnect_min_s: 1.0                          # 재접속 백오프 시작
+    reconnect_max_s: 30.0                         # 재접속 백오프 상한
+    stats_period_s: 30.0                          # 통계 로그 주기
+    latency_window: 60                            # 추론 지연 통계 표본 수
