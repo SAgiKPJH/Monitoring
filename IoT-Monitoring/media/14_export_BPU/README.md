@@ -49,6 +49,13 @@ docker run --rm -it --platform linux/amd64 `
   -v D:\Code\Monitoring\IoT-Monitoring\media:/work -w /work/14_export_BPU `
   openexplorer/ai_toolchain_ubuntu_20_x5_cpu:v1.2.8 python3 verify_quant.py --n 20
 ```
+```powershell
+# 예시
+# 1) 캘리브레이션이 바뀌었으니 재변환(분리 헤드 onnx 는 이미 있음)
+docker run --rm -it --platform linux/amd64 -v D:\Code\Monitoring\IoT-Monitoring\media:/work -w /work/14_export_BPU openexplorer/ai_toolchain_ubuntu_20_x5_cpu:v1.2.8 bash convert.sh
+# 2) INT8 PC 테스트
+docker run --rm -it --platform linux/amd64 -v D:\Code\Monitoring\IoT-Monitoring\media:/work -w /work/14_export_BPU openexplorer/ai_toolchain_ubuntu_20_x5_cpu:v1.2.8 python3 verify_quant.py --n 20
+```
 | quant/float 최대점수 비율 | 판정 | 다음 |
 |---|---|---|
 | > 0.7 | 양자화 정상 | 보드에서만 안 되면 보드 입력/런타임 쪽 (`[vision_bpu]` 로그·`3_1_pc_live_test` 비교) |
