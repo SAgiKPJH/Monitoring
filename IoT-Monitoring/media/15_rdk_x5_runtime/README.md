@@ -134,6 +134,9 @@ bash deploy/install_service.sh              # 유닛의 경로/사용자를 실�
 systemctl status baby-monitor               # 상태
 journalctl -u baby-monitor -f               # 로그(실시간)
 sudo systemctl restart baby-monitor         # .env 바꾼 뒤 재시작
+
+# 코드 변경 후 재 반영시
+sudo systemctl restart baby-monitor && journalctl -u baby-monitor -f
 ```
 `deploy/baby-monitor.service`: `python3 monitoring.py`, `Restart=always`(5초), 네트워크 준비 후 시작.
 
@@ -146,6 +149,9 @@ cd ./ros2_ws && colcon build --symlink-install && source install/setup.bash
 ros2 launch baby_monitor monitor.launch.py  # runtime_dir 자동 탐지(ros2_ws 상위에서 monitoring.py 찾음). 다른 곳이면 runtime_dir:=/경로 또는 env BABY_MONITOR_DIR
 ros2 topic echo /baby_monitor/alarm         # 다른 터미널
 bash deploy/install_service.sh ros2         # 부팅 자동 실행이 필요하면(일반 서비스와 둘 중 하나만)
+
+# 코드 변경 후 재 반영시
+sudo systemctl restart baby-monitor-ros2 && journalctl -u baby-monitor-ros2 -f
 ```
 
 ## 스펙(Spec) — 추론 시간 실측
