@@ -11,6 +11,9 @@
 #   입력 = carved-08\Cut (영상당 첫·중간 2프레임) · 출력 = 이 폴더 dataset\ (baby 0 · baby_face 1)
 #   검수 = 이 폴더 _preview_auto\ 몽타주 → 잘못된 라벨은 dataset\images|labels 에서 삭제
 # ─────────────────────────────────────────────────────────────
+#
+# ..\.venv\Scripts\python.exe auto_label.py --n-clips 100 --model ..\8_detection_2class_train\output\60\model.pth
+#
 """학습한 2클래스 모델로 baby·baby_face 의사라벨 자동 생성 — 영상당 2프레임(첫·중간).
 
 클립마다 첫·중간 프레임에 파인튜닝 2클래스 모델을 돌려 baby(0)·baby_face(1) 를 잡고,
