@@ -1,0 +1,14 @@
+# 15_rdk_x5_runtime — RDK X5(보드, BACKEND=bpu) 에서 pip 로 설치할 패키지
+#   pip3 install -r requirements.txt
+#
+# pip 대상은 이 둘뿐. torch / torchvision / ultralytics / onnxruntime 은 보드에 **필요 없음**(PC 개발·14_export_BPU 전용).
+numpy>=1.23,<2          # hobot_dnn(pyeasy_dnn) C 확장이 numpy 1.x 로 빌드된 이미지가 있어 2.x 는 import 오류 가능 → 문제 없으면 상한 제거
+opencv-python-headless>=4.8   # 창 API 불필요(3_gui_test 는 --serve 로 브라우저 확인). VideoCapture(FFMPEG)·imencode 포함
+
+# ── 보드 시스템이 제공(pip 아님) ──
+# hobot_dnn (pyeasy_dnn)  : RDK X5 시스템 이미지 기본 포함 — vision_bpu.py / face_state_bpu.py 가 사용
+# rclpy, std_msgs, launch : TROS(ROS2 Humble) — ros2_ws 를 쓸 때만, source /opt/tros/humble/setup.bash
+# python3 표준 라이브러리 : urllib(알람 HTTP), http.server(--serve MJPEG), json, threading
+#
+# ※ RDK 이미지에 python3-numpy / python3-opencv 가 이미 있으면 위 두 줄도 생략 가능:
+#     python3 -c "import numpy, cv2; print(numpy.__version__, cv2.__version__)"

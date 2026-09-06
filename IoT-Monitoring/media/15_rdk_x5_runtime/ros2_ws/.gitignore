@@ -1,0 +1,4 @@
+# colcon 빌드 산출물 — 보드에서 colcon build 로 재생성
+build/
+install/
+log/

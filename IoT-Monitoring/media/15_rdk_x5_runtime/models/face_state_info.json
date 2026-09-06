@@ -1,0 +1,15 @@
+{
+  "network": "mobilenet_v2",
+  "input_size": 128,
+  "attrs": [
+    "eyes_open",
+    "mouth_open",
+    "mouth_covered",
+    "frown"
+  ],
+  "normalize": [
+    0.5,
+    0.5
+  ],
+  "channel": "BGR"
+}

@@ -1,0 +1,22 @@
+# systemd 서비스(ROS2 변형) — ROS2 노드(baby_monitor)로 monitoring 을 띄워 토픽 연동이 필요할 때만 사용.
+# 일반 운용은 baby-monitor.service(단독 실행) 를 권장. 둘 중 하나만 enable 할 것.
+# 전제: ros2_ws 를 colcon build 해 둠 (README '배포' 참고).  설치: bash deploy/install_service.sh ros2
+[Unit]
+Description=Baby monitor ROS2 node (baby_monitor/monitor_node) - 15_rdk_x5_runtime
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sunrise
+WorkingDirectory=/home/sunrise/JJU/Monitoring
+Environment=PYTHONUNBUFFERED=1
+Environment=BABY_MONITOR_DIR=/home/sunrise/JJU/Monitoring
+ExecStart=/bin/bash -lc 'source /opt/tros/humble/setup.bash && source /home/sunrise/JJU/Monitoring/ros2_ws/install/setup.bash && exec ros2 launch baby_monitor monitor.launch.py'
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

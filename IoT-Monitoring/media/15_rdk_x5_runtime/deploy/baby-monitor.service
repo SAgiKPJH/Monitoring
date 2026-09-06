@@ -1,0 +1,23 @@
+# systemd 서비스 — 보드 부팅 시 monitoring.py 자동 실행, 크래시/종료 시 5초 후 재시작 (권장 운용 방식)
+# 설치(보드, 15_rdk_x5_runtime 폴더에서):  bash deploy/install_service.sh
+#   ※ 경로/사용자를 실제 값으로 치환해 /etc/systemd/system/ 에 복사하고 enable --now 까지 해 준다.
+# 상태/로그:  systemctl status baby-monitor   ·   journalctl -u baby-monitor -f
+# 설정은 15_rdk_x5_runtime/.env (BACKEND=bpu, STREAM_URL, SLACK_WEBHOOK ...) — monitoring.py 가 직접 읽는다.
+[Unit]
+Description=Baby monitor (RDK X5 BPU) - 15_rdk_x5_runtime/monitoring.py
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sunrise
+WorkingDirectory=/home/sunrise/JJU/Monitoring
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 /home/sunrise/JJU/Monitoring/monitoring.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
