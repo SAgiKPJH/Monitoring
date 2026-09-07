@@ -7,8 +7,10 @@
 
 1. YDIF: **움직임 감지**, 1초 1회
 2. yolo-detection: **baby 존재 감지**, 기본 **5분 1회**, 단 1에서 움직임이면 즉시 측정
-3. mobilenet-classification: **얼굴 상태**, baby_face 크롭 → 눈뜸/입벌림/입가림/인상. **30초 관찰 창**에서 눈뜸·입가림·인상이 관찰되면 **속성별 알람**
-4. yolo-pose: **pose 움직임 감지**, 30초 관찰 창에서 움직임이 관찰되면 **알람**
+3. mobilenet-classification: **얼굴 상태**, baby_face 크롭 → 눈뜸/입벌림/입가림/인상
+4. yolo-pose: **pose 움직임 감지**
+   - 3·4 는 **한 번의 30초 관찰 창**에서 같은 프레임으로 같이 관찰 → 관찰된 조건을 **한 문구로 알람**
+     (예: `눈 뜸(깨어 있음) + pose 변화(자주 움직임) — 30초 관찰  [20260906_204147]`). 쿨다운은 조건별
 
 설정은 `monitoring.py` 상단에서 조정(얼굴 속성 임계는 `src/face_thr.py`, 쿨다운은 `.env`).
 
@@ -59,8 +61,8 @@ cp .env_sample .env          # STREAM_URL·SLACK_WEBHOOK·GRAFANA_URL/TOKEN 채�
 
 ## 알람 (Slack Webhook + Grafana) — 규칙은 `알람규칙.md`
 
-- **텍스트**를 보내고, 스냅샷 이미지는 항상 `alarms\` 에 로컬 저장(웹훅은 파일 첨부 불가 → 경로만 안내).
-- **동일 알람은 5분 쿨다운**(`ALARM_COOLDOWN`, key: face/pose).
+- **텍스트 + 시각 id** `[YYYYmmdd_HHMMSS]` 를 보내고, 스냅샷은 `alarms\alarm_<id>.jpg` 로컬 저장(경로는 보내지 않음).
+- **같은 조건은 5분 쿨다운**(`ALARM_COOLDOWN`, key: `face:<속성>` / `pose` 조건별 — 쿨다운 안인 조건만 문구에서 빠짐).
 
 | env | 뜻 |
 |---|---|
@@ -214,7 +216,7 @@ RDK X5 의 BPU 는 별도 VRAM 이 없고 **ION/CMA 로 시스템 RAM 을 공유
 | `2_run_test.py` | 파이프라인 1회 실행 + 단계별 소요시간(알람 X, PC·보드 공통) |
 | `3_gui_test.py` | GUI 시각 검증 — PC 창, 또는 보드에서 자동 `--serve 8080`(MJPEG) → Windows 브라우저. 감지 후보 전부·분류 막대·썸네일·골격·HUD(시각/age/rx/최대점수) |
 | `3_1_pc_live_test.py` | PC 에서 같은 실시간 스트림을 torch(float)로 3과 동일하게 표시(3_gui_test 재사용) → 보드(BPU) 화면과 비교 |
-| `monitoring.py` | **실제 운용** — 순차 상태머신(움직임→감지→얼굴상태→pose, 30초 관찰 판정, 속성별 알람 호출) |
+| `monitoring.py` | **실제 운용** — 순차 상태머신(움직임→감지→30초 관찰 창[얼굴상태+pose], 관찰된 조건을 한 문구로 알람) |
 | `src/alarm.py` | Slack Webhook + Grafana 알람 전송(env·쿨다운) |
 | `src/vision.py` | 감지·포즈 모델 로드(`load_detector`/`load_pose`, `<stem>_info.json` 클래스명) |
 | `src/face_state.py` | 얼굴상태(멀티라벨) 로드·예측(`load_face_state`/`predict`/`ATTR_THR`) |

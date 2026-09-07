@@ -9,9 +9,10 @@ r"""RDK X5 실시간 모니터링 오케스트레이션 — 순차 상태머신(
 
   1) 움직임 감지(1초 1회, YDIF)                → 변화 있으면 다음 단계 트리거
   2) baby 존재 감지(기본 5분 1회 · 1의 움직임 시 즉시)
-  3) 얼굴 상태(baby_face 크롭 → 눈뜸/입벌림/입가림/인상)  → 30초 관찰 창에서 알람 속성이 관찰되면 속성별 알람
-  4) pose 변화량(자주 움직임)                    → 30초 관찰 창에서 움직임이 관찰되면 알람
+  3) 30초 관찰 창 1개: 얼굴 상태(baby_face 크롭 → 눈뜸/입가림/인상) + pose 변화량(자주 움직임)을
+     같은 프레임으로 같이 관찰 → 관찰된 조건을 **한 문구**로 알람 (예: 눈 뜸(깨어 있음) + pose 변화(자주 움직임) — 30초 관찰)
 관찰 = 창 안 폴(2초)의 OBS_RATIO(절반) 이상에서 조건 성립. "내내 지속"이 아니라 폴 몇 번 놓쳐도 취소되지 않는다.
+쿨다운은 조건별(key face:<attr> / pose) — 쿨다운 안인 조건만 문구에서 빠지고 나머지는 나간다.
 알람은 Slack + Grafana(alarm.py). 모델은 8(감지)·12(얼굴상태)·13(pose) 재사용.
 """
 import math
@@ -111,7 +112,8 @@ OBS_RATIO = 0.5            # 창 안 폴의 이 비율 이상에서 관찰되면
 # **속성별로** 알람(key face:<attr>, 쿨다운도 속성별) → 눈 뜸 알람이 입 가려짐 알람을 묻지 않는다.
 FACE_ALARM_ATTRS = ["mouth_covered", "frown", "eyes_open"]
 ATTR_LABEL = {"eyes_open": "눈 뜸(깨어 있음)", "mouth_covered": "입 가려짐(이불 등)",
-              "frown": "인상(울기 직전)", "mouth_open": "입 벌림"}          # 알람 문구
+              "frown": "인상(울기 직전)", "mouth_open": "입 벌림",
+              "pose": "pose 변화(자주 움직임)"}                              # 알람 문구(조건별)
 POSE_MOVE_THR = 0.022      # 정규화 keypoint 이동량(초과 시 '움직임') = 13/5 뷰어 TH_MEAN 2.2%
 # ═══════════════════════════════════════════════════
 
@@ -198,11 +200,6 @@ def pose_moving(pose, frame, memo):
     return move(prev[0], prev[1], xy, vis, diag) > POSE_MOVE_THR
 
 
-def observed(check, seconds, poll, ratio, label):
-    """check() 가 seconds 관찰 창의 폴 중 ratio 이상에서 True 면 True(관찰됨). observe_attrs 의 단일 조건판."""
-    return bool(observe_attrs(lambda: {label} if check() else set(), [label], seconds, poll, ratio, label))
-
-
 def main() -> int:
     load_backend()                                           # BACKEND 에 맞는 로더 바인딩(잘못되면 안내 후 종료)
     if not Path(DET_MODEL).exists() or not Path(FACE_MODEL).exists():
@@ -246,20 +243,21 @@ def main() -> int:
             continue
         print(f"[{time.strftime('%H:%M:%S')}] baby 감지 (motion={motion}) · face {len(faces)}")
 
-        # ── 3) 얼굴 상태 30초 관찰 → 관찰된 속성별 알람 ──
-        if faces:
-            def _face_on_now():                              # 프레임 1장으로 얼굴 재감지 → 그 얼굴들의 on 속성
-                f = grab(cap)
-                return face_on_attrs(fmodel, fmeta, f, has_baby(det, f)[1]) if f is not None else set()
-            for a in sorted(observe_attrs(_face_on_now, FACE_ALARM_ATTRS, OBS_SEC, POLL_SEC, OBS_RATIO, "얼굴상태")):
-                alarm.send(f"{ATTR_LABEL.get(a, a)} — {OBS_SEC:.0f}초 관찰",
-                           key=f"face:{a}", tags=["baby-monitor", "face", a], image=grab(cap))
-
-        # ── 4) pose 변화량 30초 관찰 → 알람 ──
-        if pose is not None and observed(lambda: pose_moving(pose, grab(cap), memo),
-                                         OBS_SEC, POLL_SEC, OBS_RATIO, "pose"):
-            alarm.send(f"pose 변화(자주 움직임) — {OBS_SEC:.0f}초 관찰",
-                       key="pose", tags=["baby-monitor", "pose"], image=grab(cap))
+        # ── 3) 30초 관찰 창 1개: 얼굴 속성 + pose 움직임을 같은 프레임으로 같이 관찰 → 관찰된 조건을 한 문구로 알람 ──
+        def _on_now():                                       # 폴마다 프레임 1장 → 얼굴 재감지·속성, pose 이동량
+            f = grab(cap)
+            if f is None:
+                return set()
+            on = face_on_attrs(fmodel, fmeta, f, has_baby(det, f)[1])
+            if pose is not None and pose_moving(pose, f, memo):
+                on.add("pose")
+            return on
+        conds = FACE_ALARM_ATTRS + (["pose"] if pose is not None else [])
+        seen = observe_attrs(_on_now, conds, OBS_SEC, POLL_SEC, OBS_RATIO, "관찰")
+        if seen:                                             # 조건별 key 로 쿨다운 → 남은 조건만 " + " 로 이어 1건
+            alarm.send_parts([("pose" if c == "pose" else f"face:{c}", ATTR_LABEL.get(c, c)) for c in conds if c in seen],
+                             suffix=f" — {OBS_SEC:.0f}초 관찰", tags=["baby-monitor"] + [c for c in conds if c in seen],
+                             image=grab(cap))
 
 
 if __name__ == "__main__":

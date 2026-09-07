@@ -35,12 +35,15 @@ def _post_json(url, data, headers, timeout=10):
 
 
 def send(text, key="", cooldown=None, tags=None, image=None):
-    """알람 전송. 같은 key 는 cooldown(기본 5분) 안에는 재전송 안 함. image=프레임(BGR) 또는 경로."""
+    """알람 전송. 같은 key 는 cooldown(기본 5분) 안에는 재전송 안 함. image=프레임(BGR) 또는 경로.
+    key 는 문자열 또는 목록(한 문구에 조건 여러 개) — 목록이면 하나라도 쿨다운 안이면 안 보냄(send_parts 가 미리 거른다)."""
+    keys = [key] if isinstance(key, str) else list(key)
     cd = COOLDOWN if cooldown is None else cooldown
     now = time.time()
-    if key and now - _last.get(key, 0) < cd:
+    if any(k and now - _last.get(k, 0) < cd for k in keys):
         return False
-    _last[key or text] = now
+    for k in keys:
+        _last[k or text] = now
 
     stamp = time.strftime("%Y%m%d_%H%M%S")                  # 알람 시각 id = alarm_<stamp>.jpg 의 <stamp>
     path = None                                              # 스냅샷 로컬 저장(항상)
@@ -62,3 +65,15 @@ def send(text, key="", cooldown=None, tags=None, image=None):
                          {"text": msg, "tags": tags or ["baby-monitor"]},
                          {"Authorization": f"Bearer {GRAFANA_TOKEN}"})
     return ok
+
+
+def send_parts(parts, cooldown=None, tags=None, image=None, sep=" + ", suffix=""):
+    """조건 여러 개를 **한 문구**로 — parts=[(key, 문구), ...]. 쿨다운 안인 key 는 빼고 남은 것만 sep 으로 이어 1건 전송.
+    예: [("face:eyes_open", "눈 뜸(깨어 있음)"), ("pose", "pose 변화(자주 움직임)")]
+        → "눈 뜸(깨어 있음) + pose 변화(자주 움직임)<suffix>  [시각 id]" (두 key 모두 쿨다운 시작)."""
+    cd = COOLDOWN if cooldown is None else cooldown
+    now = time.time()
+    live = [(k, t) for k, t in parts if not (k and now - _last.get(k, 0) < cd)]
+    if not live:
+        return False
+    return send(sep.join(t for _, t in live) + suffix, key=[k for k, _ in live], cooldown=cd, tags=tags, image=image)
