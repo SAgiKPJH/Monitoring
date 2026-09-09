@@ -46,7 +46,7 @@ class _Result:
 
 
 # ─────────────── 입력/출력 텐서 어댑터 ───────────────
-DEFAULT_INPUT = os.environ.get("BPU_INPUT", "nchw_i8").lower()   # .env 로 덮어쓰기 가능 (아래 실측 근거)
+DEFAULT_INPUT = (os.environ.get("BPU_INPUT") or "nchw_i8").lower()   # .env 의 빈 값(BPU_INPUT=)도 기본값으로   # .env 로 덮어쓰기 가능 (아래 실측 근거)
 
 
 def _input_mode(shape, layout="", ttype=""):
